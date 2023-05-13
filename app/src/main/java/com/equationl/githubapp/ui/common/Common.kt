@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
+import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.equationl.githubapp.R
 import com.equationl.githubapp.common.route.Route
@@ -89,6 +90,8 @@ fun AvatarContent(
         model = ImageRequest.Builder(LocalContext.current)
             .data(data)
             .placeholder(R.drawable.empty_img)
+            .diskCachePolicy(CachePolicy.ENABLED)
+            .memoryCachePolicy(CachePolicy.ENABLED)
             .build(),
         contentDescription = "avatar",
         modifier = realModifier

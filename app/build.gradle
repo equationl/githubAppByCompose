@@ -103,6 +103,8 @@ dependencies {
     implementation "io.github.vanpra.compose-material-dialogs:datetime:0.8.1-rc"
     implementation "io.github.vanpra.compose-material-dialogs:color:0.8.1-rc"
 
+    implementation 'com.github.ireward:compose-html:1.0.2'
+
     // see: https://developer.android.com/studio/write/java8-support#library-desugaring
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3'
 

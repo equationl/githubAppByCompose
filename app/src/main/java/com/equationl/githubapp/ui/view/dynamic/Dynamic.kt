@@ -122,6 +122,7 @@ fun DynamicRefreshContent(
         state = rememberSwipeRefreshState,
         onRefresh = {
             eventPagingItems.refresh()
+            onRefresh?.invoke()
         },
         modifier = Modifier.fillMaxSize()
     ) {
@@ -131,10 +132,6 @@ fun DynamicRefreshContent(
             onClickItem,
             headerItem = headerItem
         )
-    }
-
-    if (rememberSwipeRefreshState.isRefreshing) {
-        onRefresh?.invoke()
     }
 
 }

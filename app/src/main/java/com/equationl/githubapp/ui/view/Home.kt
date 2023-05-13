@@ -25,7 +25,9 @@ import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun HomeNavHost() {
+fun HomeNavHost(
+    onFinish: () -> Unit
+) {
     val navController = rememberAnimatedNavController()
     AnimatedNavHost(navController, Route.LOGIN) {
 
@@ -45,7 +47,7 @@ fun HomeNavHost() {
 
         composable(Route.MAIN) {
             Column(Modifier.systemBarsPadding()) {
-                MainScreen(navController)
+                MainScreen(navController, onFinish)
             }
         }
 

@@ -3,27 +3,24 @@ package com.equationl.githubapp.ui.view.main
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
+import com.equationl.githubapp.ui.common.BaseAction
+import com.equationl.githubapp.ui.common.BaseEvent
+import com.equationl.githubapp.ui.common.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.receiveAsFlow
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     // private val dataBase: IssueDb
-) : ViewModel() {
+) : BaseViewModel() {
 
-    var viewStates by mutableStateOf(HomeViewState())
+    var viewStates by mutableStateOf(MainViewState())
         private set
 
-    private val _viewEvents = Channel<HomeViewEvent>(Channel.BUFFERED)
-    val viewEvents = _viewEvents.receiveAsFlow()
-
-    fun dispatch(action: HomeViewAction) {
+    fun dispatch(action: MainViewAction) {
         when (action) {
-            is HomeViewAction.ScrollTo -> scrollTo(action.pager)
-            is HomeViewAction.ChangeGesturesEnabled -> changeGesturesEnabled(action.enable)
+            is MainViewAction.ScrollTo -> scrollTo(action.pager)
+            is MainViewAction.ChangeGesturesEnabled -> changeGesturesEnabled(action.enable)
         }
     }
 
@@ -39,20 +36,19 @@ class MainViewModel @Inject constructor(
     }
 }
 
-data class HomeViewState(
+data class MainViewState(
     val title: String = "GithubApp",
     val currentPage: MainPager = MainPager.HOME_DYNAMIC,
     val gesturesEnabled: Boolean = true
 )
 
-sealed class HomeViewEvent {
-    data class Goto(val route: String): HomeViewEvent()
-    data class ShowMessage(val message: String) : HomeViewEvent()
+sealed class MainViewEvent: BaseEvent() {
+    data class Goto(val route: String): MainViewEvent()
 }
 
-sealed class HomeViewAction {
-    data class ScrollTo(val pager: MainPager): HomeViewAction()
-    data class ChangeGesturesEnabled(val enable: Boolean): HomeViewAction()
+sealed class MainViewAction: BaseAction() {
+    data class ScrollTo(val pager: MainPager): MainViewAction()
+    data class ChangeGesturesEnabled(val enable: Boolean): MainViewAction()
 }
 
 enum class MainPager {

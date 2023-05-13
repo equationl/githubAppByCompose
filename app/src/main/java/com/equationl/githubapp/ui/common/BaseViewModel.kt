@@ -19,7 +19,7 @@ open class BaseViewModel : ViewModel() {
         }
     }
 
-    protected open fun dispatch(action: BaseAction) {
+    open fun dispatch(action: BaseAction) {
         when (action) {
             is BaseAction.ShowMag -> {
                 _viewEvents.trySend(BaseEvent.ShowMsg(action.msg))

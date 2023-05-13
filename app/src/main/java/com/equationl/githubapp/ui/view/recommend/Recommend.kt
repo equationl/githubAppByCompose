@@ -21,6 +21,7 @@ import com.equationl.githubapp.ui.common.AvatarContent
 import com.equationl.githubapp.ui.common.VerticalIconText
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import com.ireward.htmlcompose.HtmlText
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -216,7 +217,9 @@ fun RepoItem(
                 Text(text = data.language)
             }
 
-            Text(text = data.description)
+            HtmlText(
+                text = data.description
+            )
 
             Row(
                 horizontalArrangement = Arrangement.SpaceEvenly,

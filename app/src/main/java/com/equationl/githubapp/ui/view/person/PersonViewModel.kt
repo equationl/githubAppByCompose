@@ -53,6 +53,7 @@ class PersonViewModel @Inject constructor(
 
     private fun getUser(user: String) {
         viewModelScope.launch {
+            personViewState = personViewState.copy(user = User())
             val response = userService.getUser(true, user)
             if (response.isSuccessful) {
                 response.body()?.let {

@@ -6,10 +6,10 @@ import android.view.MotionEvent
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CropOriginal
-import androidx.compose.material.icons.filled.LocationCity
+import androidx.compose.material.icons.filled.CorporateFare
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Web
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.outlined.MoreHoriz
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -153,7 +153,10 @@ fun PersonContent(
                     PersonHeader(
                         personViewState.user,
                         navController,
-                        onEnablePagerScroll
+                        onEnablePagerScroll = onEnablePagerScroll,
+                        onShowMSg = {
+                            viewModel.dispatch(DynamicViewAction.ShowMsg(it))
+                        }
                     )
                 }
             },
@@ -168,6 +171,7 @@ fun PersonContent(
 fun PersonHeader(
     user: User,
     navController: NavHostController,
+    onShowMSg: (msg: String) -> Unit,
     onEnablePagerScroll: ((enable: Boolean) -> Unit)? = null
 ) {
     val context = LocalContext.current
@@ -185,10 +189,10 @@ fun PersonHeader(
                     navHostController = navController
                 )
 
-                Column {
+                Column(modifier = Modifier.padding(start = 4.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = user.login ?: "",
+                            text = user.login ?: "加载中",
                             fontSize = 23.sp
                         )
 
@@ -199,24 +203,28 @@ fun PersonHeader(
                         )
                     }
 
-                    Text(text = user.name ?: "")
+                    user.name?.let {
+                        Text(text = it)
+                    }
 
-                    IconText(imageVector = Icons.Filled.CropOriginal, text = user.company ?: "")
-                    IconText(imageVector = Icons.Filled.LocationCity, text = user.location ?: "")
+                    IconText(imageVector = Icons.Filled.CorporateFare, text = user.company ?: "")
+                    IconText(imageVector = Icons.Filled.Place, text = user.location ?: "")
                 }
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(imageVector = Icons.Filled.Web, contentDescription = null)
-                LinkText(text = user.blog ?: "") {
-                    user.blog?.let {
-                        var url = it
-                        if (!url.startsWith("http://") || !url.startsWith("https://")) {
-                            url = "http://$url"
+                if (user.blog?.isNotEmpty() == true) {
+                    Icon(imageVector = Icons.Filled.Link, contentDescription = null)
+                    LinkText(text = user.blog ?: "") {
+                        user.blog?.let {
+                            var url = it
+                            if (!url.startsWith("http://") || !url.startsWith("https://")) {
+                                url = "http://$url"
+                            }
+                            val uri = Uri.parse(url)
+                            val intent = Intent(Intent.ACTION_VIEW, uri)
+                            context.startActivity(intent)
                         }
-                        val uri = Uri.parse(url)
-                        val intent = Intent(Intent.ACTION_VIEW, uri)
-                        context.startActivity(intent)
                     }
                 }
             }
@@ -236,23 +244,33 @@ fun PersonHeader(
                     .height(IntrinsicSize.Min),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                VerticalText(topText = "Repo", bottomText = user.publicRepos.toString() )
+                VerticalText(topText = "仓库", bottomText = user.publicRepos.toString(), modifier = Modifier.clickable {
+                    // TODO
+                })
                 Divider(modifier = Modifier
                     .fillMaxHeight()
                     .width(1.dp))
-                VerticalText(topText = "Followers", bottomText = user.followers.toString())
+                VerticalText(topText = "粉丝", bottomText = user.followers.toString(), modifier = Modifier.clickable {
+                    // TODO
+                })
                 Divider(modifier = Modifier
                     .fillMaxHeight()
                     .width(1.dp))
-                VerticalText(topText = "Following", bottomText = user.following.toString())
+                VerticalText(topText = "关注", bottomText = user.following.toString(), modifier = Modifier.clickable {
+                    // TODO
+                })
                 Divider(modifier = Modifier
                     .fillMaxHeight()
                     .width(1.dp))
-                VerticalText(topText = "Star", bottomText = user.starRepos.toString())
+                VerticalText(topText = "星标", bottomText = user.starRepos.toString(), modifier = Modifier.clickable {
+                    // TODO
+                })
                 Divider(modifier = Modifier
                     .fillMaxHeight()
                     .width(1.dp))
-                VerticalText(topText = "Honer", bottomText = user.honorRepos.toString())
+                VerticalText(topText = "荣耀", bottomText = user.honorRepos.toString(), modifier = Modifier.clickable {
+                    onShowMSg("最新更新的前 100 个仓库 Star 总和")
+                })
             }
         }
 
@@ -287,16 +305,18 @@ fun PersonHeader(
 }
 
 @Composable
-private fun IconText(imageVector: ImageVector, text: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(imageVector = imageVector, contentDescription = null)
-        Text(text = text)
+private fun IconText(imageVector: ImageVector, text: String, hideWhenTextBlank: Boolean = true) {
+    if (!hideWhenTextBlank && text.isNotEmpty()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(imageVector = imageVector, contentDescription = null)
+            Text(text = text)
+        }
     }
 }
 
 @Composable
-fun VerticalText(topText: String, bottomText: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+fun VerticalText(topText: String, bottomText: String, modifier: Modifier = Modifier) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier) {
         Text(text = topText)
         Text(text = bottomText)
     }

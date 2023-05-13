@@ -1,5 +1,6 @@
 package com.equationl.githubapp.ui.view.main
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -56,6 +57,8 @@ import androidx.navigation.NavHostController
 import com.equationl.githubapp.common.route.Route
 import com.equationl.githubapp.model.bean.User
 import com.equationl.githubapp.ui.common.AvatarContent
+import com.equationl.githubapp.ui.common.BaseAction
+import com.equationl.githubapp.ui.common.BaseEvent
 import com.equationl.githubapp.ui.common.HomeTopBar
 import com.equationl.githubapp.ui.view.dynamic.DynamicContent
 import com.equationl.githubapp.ui.view.my.MyContent
@@ -71,6 +74,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun MainScreen(
     navController: NavHostController,
+    onFinish: () -> Unit,
     viewModel: MainViewModel = hiltViewModel()
 ) {
     val viewState = viewModel.viewStates
@@ -82,13 +86,13 @@ fun MainScreen(
 
     LaunchedEffect(Unit) {
         viewModel.viewEvents.collect {
-            if (it is HomeViewEvent.ShowMessage) {
-                coroutineScope.launch {
-                    scaffoldState.snackbarHostState.showSnackbar(message = it.message)
+            when (it) {
+                is MainViewEvent.Goto -> {
+                    navController.navigate(it.route)
                 }
-            }
-            else if (it is HomeViewEvent.Goto) {
-                navController.navigate(it.route)
+                is BaseEvent.ShowMsg -> {
+                    scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                }
             }
         }
     }
@@ -97,7 +101,25 @@ fun MainScreen(
     LaunchedEffect(pagerState) {
         withContext(Dispatchers.IO) {
             snapshotFlow { pagerState.currentPage }.collect { page ->
-                viewModel.dispatch(HomeViewAction.ScrollTo(MainPager.values()[page]))
+                viewModel.dispatch(MainViewAction.ScrollTo(MainPager.values()[page]))
+            }
+        }
+    }
+
+    var lastClickTime = remember { 0L }
+    BackHandler {
+        if (drawerState.isOpen) {
+            coroutineScope.launch {
+                drawerState.close()
+            }
+        }
+        else {
+            if (System.currentTimeMillis() - lastClickTime > 2000) {
+                lastClickTime = System.currentTimeMillis()
+                viewModel.dispatch(BaseAction.ShowMag("再按一次退出"))
+            }
+            else {
+                onFinish()
             }
         }
     }
@@ -146,7 +168,7 @@ fun MainScreen(
                     .padding(it)
             ) {
                 MainContent(pagerState, navController, scaffoldState, viewState.gesturesEnabled) {
-                    viewModel.dispatch(HomeViewAction.ChangeGesturesEnabled(it))
+                    viewModel.dispatch(MainViewAction.ChangeGesturesEnabled(it))
                 }
             }
         }
@@ -249,7 +271,7 @@ private fun TopBar(
 
 @Composable
 private fun BottomBar(
-    viewState: HomeViewState,
+    viewState: MainViewState,
     onScrollTo: (to: MainPager) -> Unit
 ) {
     Column(modifier = Modifier.navigationBarsPadding()) {
