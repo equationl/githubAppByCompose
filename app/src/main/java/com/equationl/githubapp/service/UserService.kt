@@ -24,7 +24,7 @@ interface UserService {
     ):Response<User>
 
     @PATCH("user")
-    fun saveUserInfo(
+    suspend fun saveUserInfo(
             @Body body: UserInfoRequestModel
     ):Response<User>
 
@@ -54,7 +54,7 @@ interface UserService {
     ):Response<ResponseBody>
 
     @GET("users/{user}/followers")
-    fun getFollowers(
+    suspend fun getFollowers(
             @Header("forceNetWork") forceNetWork: Boolean,
             @Path("user") user: String,
             @Query("page") page: Int,
@@ -62,7 +62,7 @@ interface UserService {
     ):Response<ArrayList<User>>
 
     @GET("users/{user}/following")
-    fun getFollowing(
+    suspend fun getFollowing(
             @Header("forceNetWork") forceNetWork: Boolean,
             @Path("user") user: String,
             @Query("page") page: Int,

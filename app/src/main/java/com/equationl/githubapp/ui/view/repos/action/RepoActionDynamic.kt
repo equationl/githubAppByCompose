@@ -9,7 +9,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.equationl.githubapp.ui.view.dynamic.DynamicRefreshContent
+import com.equationl.githubapp.ui.view.dynamic.EventRefreshContent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,7 +39,7 @@ fun RepoActionDynamicContent(
 
     if (viewState.dynamicFlow != null) {
         val dynamicList = viewState.dynamicFlow.collectAsLazyPagingItems()
-        DynamicRefreshContent(
+        EventRefreshContent(
             navHostController = navHostController,
             eventPagingItems = dynamicList,
             onLoadError = {

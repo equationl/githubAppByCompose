@@ -12,7 +12,7 @@ interface NotificationService {
 
 
     @GET("notifications")
-    fun getNotification(
+    suspend fun getNotification(
             @Header("forceNetWork") forceNetWork: Boolean,
             @Query("all") all: Boolean,
             @Query("participating") participating: Boolean,
@@ -21,18 +21,18 @@ interface NotificationService {
     ):Response<ArrayList<Notification>>
 
     @GET("notifications")
-    fun getNotificationUnRead(
+    suspend fun getNotificationUnRead(
             @Header("forceNetWork") forceNetWork: Boolean,
             @Query("page") page: Int,
             @Query("per_page") per_page: Int = AppConfig.PAGE_SIZE
     ):Response<ArrayList<Notification>>
 
     @PATCH("notifications/threads/{threadId}")
-    fun setNotificationAsRead(
+    suspend fun setNotificationAsRead(
             @Path("threadId") threadId: String):Response<ResponseBody>
 
 
     @PUT("notifications")
-    fun setAllNotificationAsRead():Response<ResponseBody>
+    suspend fun setAllNotificationAsRead():Response<ResponseBody>
 
 }

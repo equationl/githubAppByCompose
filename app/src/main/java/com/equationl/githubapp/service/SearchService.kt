@@ -16,7 +16,7 @@ import retrofit2.http.Query
 interface SearchService {
 
     @GET("search/users")
-    fun searchUsers(
+    suspend fun searchUsers(
             @Query(value = "q", encoded = true) query: String,
             @Query("sort") sort: String = "best%20match",
             @Query("order") order: String = "desc",
@@ -25,7 +25,7 @@ interface SearchService {
     ):Response<SearchResult<User>>
 
     @GET("search/repositories")
-    fun searchRepos(
+    suspend fun searchRepos(
             @Query(value = "q", encoded = true) query: String,
             @Query("sort") sort: String = "best%20match",
             @Query("order") order: String = "desc",

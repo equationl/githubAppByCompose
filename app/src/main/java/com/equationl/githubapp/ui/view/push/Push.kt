@@ -66,6 +66,9 @@ fun PushDetailScreen(
     val scaffoldState = rememberBottomSheetScaffoldState()
     val coroutineScope = rememberCoroutineScope()
 
+    val backgroundColor = MaterialTheme.colorScheme.background
+    val primaryColor = MaterialTheme.colorScheme.primary
+
     LaunchedEffect(Unit) {
         viewModel.viewEvents.collect {
             when (it) {
@@ -80,7 +83,7 @@ fun PushDetailScreen(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.dispatch(PushAction.LoadData(context, userName, repoName, sha))
+        viewModel.dispatch(PushAction.LoadData(userName, repoName, sha, backgroundColor, primaryColor))
     }
 
     Scaffold(
@@ -132,7 +135,7 @@ fun PushDetailScreen(
                     }
                 },
                 onRefresh = {
-                    viewModel.dispatch(PushAction.LoadData(context, userName, repoName, sha))
+                    viewModel.dispatch(PushAction.LoadData(userName, repoName, sha, backgroundColor, primaryColor))
                 }
             )
         }

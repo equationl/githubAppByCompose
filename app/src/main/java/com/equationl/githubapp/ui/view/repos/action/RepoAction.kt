@@ -22,8 +22,11 @@ import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.equationl.githubapp.R
+import com.equationl.githubapp.common.route.Route
 import com.equationl.githubapp.model.ui.ReposUIModel
 import com.equationl.githubapp.ui.common.VerticalIconText
+import com.equationl.githubapp.ui.view.list.GeneralListEnum
+import com.equationl.githubapp.ui.view.repos.ReposPager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,6 +35,7 @@ fun ReposActionContent(
     reposName: String,
     scaffoldState: BottomSheetScaffoldState,
     navController: NavHostController,
+    onChangePager: (pager: ReposPager) -> Unit,
     viewModel: RepoActionViewModel = hiltViewModel()
 ) {
     LaunchedEffect(Unit) {
@@ -60,6 +64,8 @@ fun ReposActionContent(
                         ReposActionHeader(
                             viewState.reposUIModel,
                             viewState.currentTab,
+                            navController,
+                            onChangePager
                         ) {
                             viewModel.dispatch(RepoActionAction.ChangeTab(it))
                         }
@@ -78,6 +84,8 @@ fun ReposActionContent(
                         ReposActionHeader(
                             viewState.reposUIModel,
                             viewState.currentTab,
+                            navController,
+                            onChangePager
                         ) {
                             viewModel.dispatch(RepoActionAction.ChangeTab(it))
                         }
@@ -94,7 +102,9 @@ fun ReposActionContent(
 fun ReposActionHeader(
     reposUIModel: ReposUIModel,
     currentTab: RepoActionTab,
-    onChangeTab: (changeTo: RepoActionTab) -> Unit
+    navController: NavHostController,
+    onChangePager: (pager: ReposPager) -> Unit,
+    onChangeTab: (changeTo: RepoActionTab) -> Unit,
 ) {
     Card(modifier = Modifier
         .fillMaxWidth()
@@ -148,7 +158,7 @@ fun ReposActionHeader(
                         .height(IntrinsicSize.Min)
                 ) {
                     VerticalIconText(icon = Icons.Outlined.StarBorder, text = reposUIModel.repositoryStar, modifier = Modifier.clickable {
-                        // TODO
+                        navController.navigate("${Route.USER_LIST}/${reposUIModel.repositoryName}/${reposUIModel.ownerName}/${GeneralListEnum.RepositoryStarUser.name}")
                     })
 
                     Divider(modifier = Modifier
@@ -156,7 +166,7 @@ fun ReposActionHeader(
                         .width(1.dp))
 
                     VerticalIconText(icon = Icons.Outlined.Share, text = reposUIModel.repositoryFork, modifier = Modifier.clickable {
-                        // TODO
+                        navController.navigate("${Route.REPO_LIST}/${reposUIModel.repositoryName}/${reposUIModel.ownerName}/${GeneralListEnum.RepositoryForkUser.name}")
                     })
 
                     Divider(modifier = Modifier
@@ -164,7 +174,7 @@ fun ReposActionHeader(
                         .width(1.dp))
 
                     VerticalIconText(icon = Icons.Outlined.Visibility, text = reposUIModel.repositoryWatch, modifier = Modifier.clickable {
-                        // TODO
+                        navController.navigate("${Route.USER_LIST}/${reposUIModel.repositoryName}/${reposUIModel.ownerName}/${GeneralListEnum.RepositoryWatchUser.name}")
                     })
 
                     Divider(modifier = Modifier
@@ -172,7 +182,7 @@ fun ReposActionHeader(
                         .width(1.dp))
 
                     VerticalIconText(icon = Icons.Outlined.Info, text = reposUIModel.repositoryIssue, modifier = Modifier.clickable {
-                        // TODO
+                        onChangePager(ReposPager.Issue)
                     })
 
                     Divider(modifier = Modifier

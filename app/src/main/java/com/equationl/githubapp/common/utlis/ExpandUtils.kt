@@ -2,58 +2,11 @@ package com.equationl.githubapp.common.utlis
 
 import android.content.ClipData
 import android.content.Context
-import android.content.res.Resources
-import android.graphics.Color
-import android.util.TypedValue
-import android.util.TypedValue.COMPLEX_UNIT_DIP
-import android.util.TypedValue.COMPLEX_UNIT_SP
-import androidx.core.content.ContextCompat
 import java.util.regex.Pattern
+import kotlin.math.abs
 
 /**
- * 拓展类
- * Created by guoshuyu
- * Date: 2018-10-24
- */
-
-private val metrics = Resources.getSystem().displayMetrics
-
-val Float.dp: Float
-    get() = TypedValue.applyDimension(COMPLEX_UNIT_DIP, this, metrics)
-
-val Int.dp: Int
-    get() = TypedValue.applyDimension(COMPLEX_UNIT_DIP, this.toFloat(), metrics).toInt()
-
-val Float.sp: Float
-    get() = TypedValue.applyDimension(COMPLEX_UNIT_SP, this, metrics)
-
-val Int.sp: Int
-    get() = TypedValue.applyDimension(COMPLEX_UNIT_SP, this.toFloat(), metrics).toInt()
-
-val Number.px: Number
-    get() = this
-
-val Number.px2dp: Int
-    get() = (this.toFloat() / metrics.density).toInt()
-
-val Number.px2sp: Int
-    get() = (this.toFloat() / metrics.scaledDensity).toInt()
-
-/**
- * 拓展颜色转String
- */
-fun Context.colorIdToString(colorId: Int): String {
-    val stringBuffer = StringBuffer()
-    val color = ContextCompat.getColor(this, colorId)
-    stringBuffer.append("#")
-    stringBuffer.append(Integer.toHexString(Color.red(color)))
-    stringBuffer.append(Integer.toHexString(Color.green(color)))
-    stringBuffer.append(Integer.toHexString(Color.blue(color)))
-    return stringBuffer.toString()
-}
-
-/**
- * 拓展复制到粘粘版
+ * 复制到剪切板
  */
 fun Context.copy(string: String) {
     val clipboardManager = getSystemService(Context.CLIPBOARD_SERVICE)
@@ -63,16 +16,17 @@ fun Context.copy(string: String) {
 }
 
 /**
- * 拓展获取版本号
+ * 获取版本号
  */
 fun Context.getVersionName(): String {
+    @Suppress("DEPRECATION")
     val manager = packageManager.getPackageInfo(packageName, 0)
     return manager.versionName
 }
 
 
 /**
- * 拓展列表到文本转化
+ * 列表到文本转化
  */
 fun List<String>.toSplitString(): String {
     var result = ""
@@ -83,10 +37,10 @@ fun List<String>.toSplitString(): String {
 }
 
 /**
- * 拓展String版本号对比
+ * 版本号对比
  */
 fun String.compareVersion(v2: String?): String? {
-    if (v2 == null || v2.isEmpty()) return null
+    if (v2.isNullOrEmpty()) return null
     val regEx = "[^0-9]"
     val p = Pattern.compile(regEx)
     var s1: String = p.matcher(this).replaceAll("").trim()
@@ -95,7 +49,7 @@ fun String.compareVersion(v2: String?): String? {
     val cha: Int = s1.length - s2.length
     val buffer = StringBuffer()
     var i = 0
-    while (i < Math.abs(cha)) {
+    while (i < abs(cha)) {
         buffer.append("0")
         ++i
     }

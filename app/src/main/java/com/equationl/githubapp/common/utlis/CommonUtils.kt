@@ -1,5 +1,7 @@
 package com.equationl.githubapp.common.utlis
 
+import android.webkit.CookieManager
+import android.webkit.WebStorage
 import androidx.compose.ui.graphics.Color
 import com.equationl.githubapp.common.config.AppConfig
 import com.equationl.githubapp.common.net.PageInfo
@@ -16,7 +18,6 @@ import java.util.Locale
  * 通用工具类
  */
 object CommonUtils {
-    private const val TAG = "el, CommonUtils"
 
     private const val MILLIS_LIMIT = 1000.0
 
@@ -27,34 +28,6 @@ object CommonUtils {
     private const val HOURS_LIMIT = 24 * MINUTES_LIMIT
 
     private const val DAYS_LIMIT = 30 * HOURS_LIMIT
-
-
-    /**
-     * 加载用户头像
-     */
-    /*fun loadUserHeaderImage(imageView: ImageView, url: String, size: Point = Point(50.dp, 50.dp)) {
-        val option = GSYLoadOption()
-                .setDefaultImg(R.drawable.logo)
-                .setErrorImg(R.drawable.logo)
-                .setCircle(true)
-                .setSize(size)
-                .setUri(url)
-        GSYImageLoaderManager.sInstance.imageLoader().loadImage(option, imageView, null)
-    }*/
-
-    /**
-     * 加载高斯模糊图片
-     */
-    /*fun loadImageBlur(imageView: ImageView, url: String) {
-        val process = BlurTransformation()
-        val option = GSYLoadOption()
-                .setDefaultImg(R.drawable.logo)
-                .setErrorImg(R.drawable.logo)
-                .setUri(url)
-                .setTransformations(process)
-
-        GSYImageLoaderManager.sInstance.imageLoader().loadImage(option, imageView, null)
-    }*/
 
 
     fun getDateStr(date: Date?): String {
@@ -100,44 +73,6 @@ object CommonUtils {
     fun getCommitHtmlUrl(userName: String, reposName: String, sha: String): String =
             AppConfig.GITHUB_BASE_URL + userName + "/" + reposName + "/commit/" + sha
 
-
-    /*fun launchUrl(context: Context, url: String?) {
-        if (url == null || url.isEmpty()) return
-        val parseUrl = url.toUri()
-        var isImage = isImageEnd(parseUrl.toString())
-        if (parseUrl.toString().endsWith("?raw=true")) {
-            isImage = isImageEnd(parseUrl.toString().replace("?raw=true", ""))
-        }
-        if (isImage) {
-            var imageUrl = url
-            if (!parseUrl.toString().endsWith("?raw=true")) {
-                imageUrl = "$url?raw=true"
-            }
-            ImagePreViewActivity.gotoImagePreView(imageUrl)
-            return
-        }
-
-        if (parseUrl.host == "github.com" && parseUrl.path!!.isNotEmpty()) {
-            val pathNames = parseUrl.path!!.split("/")
-            if (pathNames.size == 2) {
-                //解析人
-                val userName = pathNames[1]
-                PersonActivity.gotoPersonInfo(userName)
-            } else if (pathNames.size >= 3) {
-                val userName = pathNames[1]
-                val repoName = pathNames[2]
-                //解析仓库
-                if (pathNames.size == 3) {
-                    ReposDetailActivity.gotoReposDetail(userName, repoName)
-                } else {
-                    context.browse(url)
-                }
-            }
-        } else if (url.startsWith("http")) {
-            context.browse(url)
-        }
-    }*/
-
     private val sImageEndTag = arrayListOf(".png", ".jpg", ".jpeg", ".gif", ".svg")
 
     fun isImageEnd(path: String): Boolean {
@@ -176,6 +111,14 @@ object CommonUtils {
             }
             user.honorRepos = count
         }
+    }
+
+    fun clearCookies() {
+        val cookieManager = CookieManager.getInstance()
+        cookieManager.setAcceptCookie(true)
+        cookieManager.removeAllCookies(null)
+        WebStorage.getInstance().deleteAllData()
+        CookieManager.getInstance().flush()
     }
 
 }

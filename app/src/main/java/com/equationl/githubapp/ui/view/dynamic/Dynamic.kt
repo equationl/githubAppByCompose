@@ -62,7 +62,7 @@ fun DynamicContent(
     else {
         val dynamicList = viewState.dynamicFlow.collectAsLazyPagingItems()
 
-        DynamicRefreshContent(
+        EventRefreshContent(
             navHostController = navController,
             eventPagingItems = dynamicList,
             onLoadError = {
@@ -75,14 +75,14 @@ fun DynamicContent(
     }
 
     if (viewState.showChoosePushDialog) {
-        DynamicChoosePushDialog(desList = viewState.pushShaDesList, valueList = viewState.pushShaList, onClickItem = {
+        EventChoosePushDialog(desList = viewState.pushShaDesList, valueList = viewState.pushShaList, onClickItem = {
             viewModel.dispatch(DynamicViewAction.ClickItem(it))
         })
     }
 }
 
 @Composable
-private fun DynamicChoosePushDialog(
+fun EventChoosePushDialog(
     desList: List<String>,
     valueList: List<String>,
     onClickItem: (eventUiModel: EventUIModel) -> Unit
@@ -102,7 +102,7 @@ private fun DynamicChoosePushDialog(
 }
 
 @Composable
-fun DynamicRefreshContent(
+fun EventRefreshContent(
     navHostController: NavHostController,
     eventPagingItems: LazyPagingItems<EventUIModel>,
     onLoadError: (msg: String) -> Unit,
@@ -126,7 +126,7 @@ fun DynamicRefreshContent(
         },
         modifier = Modifier.fillMaxSize()
     ) {
-        DynamicLazyColumn(
+        EventLazyColumn(
             navHostController,
             eventPagingItems,
             onClickItem,
@@ -137,7 +137,7 @@ fun DynamicRefreshContent(
 }
 
 @Composable
-fun DynamicLazyColumn(
+fun EventLazyColumn(
     navHostController: NavHostController,
     eventPagingItems: LazyPagingItems<EventUIModel>,
     onClickItem: (eventUiModel: EventUIModel) -> Unit,
@@ -153,7 +153,7 @@ fun DynamicLazyColumn(
         itemsIndexed(eventPagingItems, key = {_, item -> item.id}) {_, item ->
             if (item != null) {
                 Column(modifier = Modifier.padding(8.dp)) {
-                    DynamicColumnItem(
+                    EventItem(
                         item.image,
                         item.username,
                         item.time,
@@ -184,7 +184,7 @@ fun DynamicLazyColumn(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DynamicColumnItem(
+fun EventItem(
     avatarUrl: String,
     userName: String,
     timeText: String,

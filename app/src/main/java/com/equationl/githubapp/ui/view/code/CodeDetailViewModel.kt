@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewModelScope
 import com.equationl.githubapp.common.utlis.CommonUtils
 import com.equationl.githubapp.common.utlis.HtmlUtils
@@ -32,11 +33,11 @@ class CodeDetailViewModel @Inject constructor(
             viewStates = viewStates.copy(htmlContent = "<h1>该文件不支持预览</h1>")
         }
 
-    public override fun dispatch(action: BaseAction) {
+    override fun dispatch(action: BaseAction) {
         super.dispatch(action)
 
         when (action) {
-            is CodeDetailAction.LoadDate -> loadData(action.context, action.userName, action.reposName, action.path, action.localCode)
+            is CodeDetailAction.LoadDate -> loadData(action.userName, action.reposName, action.path, action.localCode, action.backgroundColor, action.primaryColor)
             is CodeDetailAction.ClickMoreMenu -> clickMoreMenu(action.context, action.pos, action.userName, action.reposName, action.url)
         }
     }
@@ -59,10 +60,10 @@ class CodeDetailViewModel @Inject constructor(
         }
     }
 
-    private fun loadData(context: Context, userName: String, reposName: String, path: String, localCode: String?) {
+    private fun loadData(userName: String, reposName: String, path: String, localCode: String?, backgroundColor: Color, primaryColor: Color) {
         viewModelScope.launch(exception) {
             if (localCode == null || localCode == "null") {
-                requestFile(context, userName, reposName, path)
+                requestFile(userName, reposName, path, backgroundColor, primaryColor)
             }
             else {
                 val codeContent = File(localCode).readText()
@@ -71,7 +72,7 @@ class CodeDetailViewModel @Inject constructor(
         }
     }
 
-    private suspend fun requestFile(context: Context, userName: String, reposName: String, path: String) {
+    private suspend fun requestFile(userName: String, reposName: String, path: String, backgroundColor: Color, primaryColor: Color) {
         val response = repoService.getRepoFilesDetail(userName, reposName, path)
         if (response.isSuccessful) {
             val body = response.body()
@@ -79,7 +80,7 @@ class CodeDetailViewModel @Inject constructor(
                 _viewEvents.trySend(BaseEvent.ShowMsg("body is null!"))
             }
             else {
-                val htmlString = HtmlUtils.resolveHtmlFile(context, body)
+                val htmlString = HtmlUtils.resolveHtmlFile(body, backgroundColor, primaryColor)
                 viewStates = viewStates.copy(htmlContent = htmlString)
             }
         }
@@ -94,6 +95,6 @@ data class CodeDetailState (
 )
 
 sealed class CodeDetailAction: BaseAction() {
-    data class LoadDate(val context: Context, val userName: String, val reposName: String, val path: String, val localCode: String?) : CodeDetailAction()
+    data class LoadDate(val context: Context, val userName: String, val reposName: String, val path: String, val localCode: String?, val backgroundColor: Color, val primaryColor: Color) : CodeDetailAction()
     data class ClickMoreMenu(val context: Context, val pos: Int, val userName: String, val reposName: String, val url: String): CodeDetailAction()
 }

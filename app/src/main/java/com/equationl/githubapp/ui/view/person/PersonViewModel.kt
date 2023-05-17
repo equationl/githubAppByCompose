@@ -52,6 +52,9 @@ class PersonViewModel @Inject constructor(
     }
 
     private fun getUser(user: String) {
+        // TODO 没有判断打开的是组织还是用户
+        // TODO 没有检查是否关注 checkFocus
+        // TODO 没有根据用户名判断是否是当前登录用户
         viewModelScope.launch {
             personViewState = personViewState.copy(user = User())
             val response = userService.getUser(true, user)

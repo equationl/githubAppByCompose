@@ -1,7 +1,8 @@
 package com.equationl.githubapp.common.utlis
 
-import android.content.Context
-import com.equationl.githubapp.R
+import androidx.compose.ui.graphics.Color
+import com.equationl.githubapp.ui.theme.MiWhite
+import com.equationl.githubapp.util.Utils.toString
 
 /**
  * 对Html数据拓展显示
@@ -10,23 +11,23 @@ import com.equationl.githubapp.R
  */
 
 object HtmlUtils {
-    fun generateCode2HTml(context: Context, mdData: String?, backgroundColorId: Int, lang: String = "java", userBR: Boolean = true): String {
+    fun generateCode2HTml(mdData: String?, backgroundColor: Color, primaryColor: Color, lang: String = "java", userBR: Boolean = true): String {
         val currentData = if (mdData != null && mdData.indexOf("<code>") == -1) {
             "<body>\n<pre class=\"pre\">\n<code lang='$lang'>\n$mdData</code>\n</pre>\n</body>\n"
         } else {
             "<body>\n<pre class=\"pre\">\n$mdData</pre>\n</body>\n"
         }
-        return generateHtml(context, currentData, backgroundColorId, userBR)
+        return generateHtml(currentData, backgroundColor, primaryColor, userBR)
     }
 
-    fun generateHtml(context: Context, mdData: String?, backgroundColorId: Int = R.color.white, userBR: Boolean = true): String {
+    fun generateHtml(mdData: String?, backgroundColor: Color, primaryColor: Color, userBR: Boolean = true): String {
         if (mdData == null) {
             return ""
         }
-        val backgroundColor: String = context.colorIdToString(backgroundColorId)
+
         var mdDataCode: String = mdData
-        val regExCode = "<[\\s]*?code[^>]*?>[\\s\\S]*?<[\\s]*?\\/[\\s]*?code[\\s]*?>"
-        val regExPre = "<[\\s]*?pre[^>]*?>[\\s\\S]*?<[\\s]*?\\/[\\s]*?pre[\\s]*?>"
+        val regExCode = "<\\s*?code[^>]*?>[\\s\\S]*?<\\s*?/\\s*?code\\s*?>"
+        val regExPre = "<\\s*?pre[^>]*?>[\\s\\S]*?<\\s*?/\\s*?pre\\s*?>"
 
 
         try {
@@ -84,13 +85,15 @@ object HtmlUtils {
             e.printStackTrace()
         }
 
-        return generateCodeHtml(context, mdDataCode, false, backgroundColor, userBR)
+        return generateCodeHtml(mdDataCode, backgroundColor.toString, primaryColor.toString, userBR)
     }
 
     /**
      * style for mdHTml
      */
-    fun generateCodeHtml(context: Context, mdHTML: String, wrap: Boolean, backgroundColor: String?, userBR: Boolean = true): String {
+    private fun generateCodeHtml(mdHTML: String, backgroundColor: String?, primaryColor: String?, userBR: Boolean = true, wrap: Boolean = false): String {
+        val whiteColor = MiWhite.toString
+
         return "<html>\n" +
                 "<head>\n" +
                 "<meta charset=\"utf-8\" />\n" +
@@ -134,7 +137,7 @@ object HtmlUtils {
                 "}" +
                 "thead, tr {" +
                 "background:" +
-                context.colorIdToString(R.color.white) +
+                whiteColor +
                 ";}" +
                 "td, th {" +
                 "padding: 5px 10px;" +
@@ -142,31 +145,31 @@ object HtmlUtils {
                 "direction:hor" +
                 "}" +
                 ".highlight {overflow: scroll; background: " +
-                context.colorIdToString(R.color.white) +
+                whiteColor +
                 "}" +
                 "tr:nth-child(even) {" +
                 "background:" +
-                context.colorIdToString(R.color.purple_200) +
+                primaryColor +
                 ";" +
                 "color:" +
-                context.colorIdToString(R.color.white) +
+                whiteColor +
                 ";" +
                 "}" +
                 "tr:nth-child(odd) {" +
                 "background: " +
-                context.colorIdToString(R.color.white) +
+                whiteColor +
                 ";" +
                 "color:" +
-                context.colorIdToString(R.color.purple_200) +
+                primaryColor +
                 ";" +
                 "}" +
                 "th {" +
                 "font-size: 14px;" +
                 "color:" +
-                context.colorIdToString(R.color.white) +
+                whiteColor +
                 ";" +
                 "background:" +
-                context.colorIdToString(R.color.purple_200) +
+                primaryColor +
                 ";" +
                 "}" +
                 "</style>" +
@@ -188,42 +191,43 @@ object HtmlUtils {
         var addLineNum = 0
         var removeLineNum = 0
         var normalLineNum = 0
-        for (i in 0 until lines.size) {
-            val line = lines[i]
-            var lineNumberStr = ""
+        for (element in lines) {
+            var lineNumberStr: String
             var classStr = ""
             var curAddNumber = -1
             var curRemoveNumber = -1
 
-            if (line.indexOf("+") == 0) {
+            if (element.indexOf("+") == 0) {
                 classStr = "class=\"hljs-addition\";"
                 curAddNumber = addStartLine + normalLineNum + addLineNum
-                addLineNum++;
-            } else if (line.indexOf("-") == 0) {
+                addLineNum++
+            } else if (element.indexOf("-") == 0) {
                 classStr = "class=\"hljs-deletion\";"
                 curRemoveNumber = removeStartLine + normalLineNum + removeLineNum
-                removeLineNum++;
-            } else if (line.indexOf("@@") == 0) {
+                removeLineNum++
+            } else if (element.indexOf("@@") == 0) {
                 classStr = "class=\"hljs-literal\";"
-                removeStartLine = getRemoveStartLine(line)
-                addStartLine = getAddStartLine(line)
+                removeStartLine = getRemoveStartLine(element)
+                addStartLine = getAddStartLine(element)
                 addLineNum = 0
                 removeLineNum = 0
                 normalLineNum = 0
-            } else if (!(line.indexOf("\\") == 0)) {
+            } else if (element.indexOf("\\") != 0) {
                 curAddNumber = addStartLine + normalLineNum + addLineNum
                 curRemoveNumber = removeStartLine + normalLineNum + removeLineNum
                 normalLineNum++
             }
             lineNumberStr =
                     getDiffLineNumber(if (curRemoveNumber == -1) "" else (curRemoveNumber.toString() + ""), if (curAddNumber == -1) "" else (curAddNumber.toString() + ""))
-            source = source + "\n" + "<div " + classStr + ">" + if (wrap) "" else (lineNumberStr + getBlank(1)) + line + "</div>"
+            source = "$source\n<div $classStr>" + if (wrap) "" else (lineNumberStr + getBlank(
+                1
+            )) + element + "</div>"
         }
 
         return source
     }
 
-    fun getRemoveStartLine(line: String): Int {
+    private fun getRemoveStartLine(line: String): Int {
         return try {
             line.substring(line.indexOf("-") + 1, line.indexOf(",")).toInt()
         } catch (e: Exception) {
@@ -231,20 +235,20 @@ object HtmlUtils {
         }
     }
 
-    fun getAddStartLine(line: String): Int {
+    private fun getAddStartLine(line: String): Int {
         return try {
             line.substring(line.indexOf("+") + 1, line.indexOf(",", line.indexOf("+"))).toInt()
         } catch (e: Exception) {
-            1;
+            1
         }
     }
 
-    fun getDiffLineNumber(removeNumber: String, addNumber: String): String {
+    private fun getDiffLineNumber(removeNumber: String, addNumber: String): String {
         val minLength = 4
-        return getBlank(minLength - removeNumber.length) + removeNumber + getBlank(1) + getBlank(minLength - addNumber.length) + addNumber;
+        return getBlank(minLength - removeNumber.length) + removeNumber + getBlank(1) + getBlank(minLength - addNumber.length) + addNumber
     }
 
-    fun getBlank(num: Int): String {
+    private fun getBlank(num: Int): String {
         var builder = ""
         for (i in 0 until num) {
             builder += " "
@@ -252,28 +256,28 @@ object HtmlUtils {
         return builder
     }
 
-    fun resolveHtmlFile(context: Context, res: String, defaultLang: String = "markdown"): String {
+    fun resolveHtmlFile(res: String, backgroundColor: Color, primaryColor: Color, defaultLang: String = "markdown"): String {
 
         val startTag = "class=\"instapaper_body "
         val startLang = res.indexOf(startTag)
         val endLang = res.indexOf("\" data-path=\"")
         var lang = ""
         if (startLang >= 0 && endLang >= 0) {
-            var tmpLang = res.substring(startLang + startTag.length, endLang)
-            lang = fromName(tmpLang.toLowerCase());
+            val tmpLang = res.substring(startLang + startTag.length, endLang)
+            lang = fromName(tmpLang.lowercase())
         }
         if (lang.isBlank()) {
             lang = defaultLang
         }
         return if ("markdown" == lang) {
-            generateHtml(context, res, R.color.white)
+            generateHtml(res, backgroundColor, primaryColor)
         } else {
-            generateCode2HTml(context, res, R.color.purple_500, lang)
+            generateCode2HTml(res, backgroundColor, primaryColor, lang)
         }
 
     }
 
-    fun fromName(name: String): String {
+    private fun fromName(name: String): String {
         var result = name
         when (name) {
             "sh" -> result = "shell"

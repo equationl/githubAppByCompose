@@ -1,7 +1,6 @@
 package com.equationl.githubapp.model.conversion
 
 
-import android.content.Context
 import com.equationl.githubapp.common.utlis.CommonUtils
 import com.equationl.githubapp.model.bean.Event
 import com.equationl.githubapp.model.bean.Notification
@@ -194,7 +193,7 @@ object EventConversion {
     }
 
 
-    fun notificationToEventUIModel(context: Context, notification: Notification): EventUIModel {
+    fun notificationToEventUIModel(notification: Notification): EventUIModel {
         val eventUIModel = EventUIModel()
         eventUIModel.time = CommonUtils.getNewsTimeStr(notification.updateAt)
         eventUIModel.username = notification.repository?.fullName ?: ""

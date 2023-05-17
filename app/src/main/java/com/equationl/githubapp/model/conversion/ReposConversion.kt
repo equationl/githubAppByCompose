@@ -1,10 +1,9 @@
 package com.equationl.githubapp.model.conversion
 
-import android.content.Context
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.FolderOpen
-import com.equationl.githubapp.R
+import androidx.compose.ui.graphics.Color
 import com.equationl.githubapp.common.utlis.CommonUtils
 import com.equationl.githubapp.common.utlis.HtmlUtils
 import com.equationl.githubapp.model.bean.CommitFile
@@ -110,7 +109,7 @@ object ReposConversion {
         return pushUIModel
     }
 
-    fun repoCommitToFileUIModel(context: Context, commit: CommitFile): FileUIModel {
+    fun repoCommitToFileUIModel(commit: CommitFile, backGroundColor: Color, primaryColor: Color): FileUIModel {
         val fileUIModel = FileUIModel()
         val filename = commit.fileName ?: ""
         val nameSplit = filename.split("/".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
@@ -119,8 +118,7 @@ object ReposConversion {
         fileUIModel.icon = Icons.Filled.FileOpen
         fileUIModel.sha = commit.sha ?: ""
 
-        val html = HtmlUtils.generateCode2HTml(context, HtmlUtils.parseDiffSource(commit.patch
-            ?: "", false), R.color.purple_500, "")
+        val html = HtmlUtils.generateCode2HTml(HtmlUtils.parseDiffSource(commit.patch ?: "", false), backGroundColor, primaryColor)
         fileUIModel.patch = html
         return fileUIModel
     }

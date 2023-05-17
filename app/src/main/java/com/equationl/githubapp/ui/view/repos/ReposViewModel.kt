@@ -20,7 +20,6 @@ import javax.inject.Inject
 @HiltViewModel
 class ReposViewModel @Inject constructor(
     val repoService: RepoService,
-    // private val dataBase: IssueDb
 ) : BaseViewModel() {
 
     var viewStates by mutableStateOf(ReposViewState())
@@ -55,8 +54,7 @@ class ReposViewModel @Inject constructor(
 
     private fun scrollTo(pager: ReposPager) {
         viewStates = viewStates.copy(
-            currentPage = pager,
-            title = "GithubApp",
+            currentPage = pager
         )
     }
 
@@ -109,7 +107,6 @@ class ReposViewModel @Inject constructor(
 }
 
 data class ReposViewState(
-    val title: String = "TODO LIST",
     val currentPage: ReposPager = ReposPager.Readme,
     val isWatch: Boolean = false,
     val isStar: Boolean = false

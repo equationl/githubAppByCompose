@@ -1,5 +1,7 @@
 package com.equationl.githubapp.model.ui
 
+import java.util.UUID
+
 
 /**
  * 仓库相关UI类型
@@ -32,22 +34,6 @@ class ReposUIModel {
 
     var repositoryIssue: String = "--"
 
-
-    fun cloneFrom(reposUIModel: ReposUIModel) {
-        ownerName = reposUIModel.ownerName
-        if (ownerPic != reposUIModel.ownerPic) {
-            ownerPic = reposUIModel.ownerPic
-        }
-        repositoryName = reposUIModel.repositoryName
-        repositoryStar = reposUIModel.repositoryStar
-        repositoryFork = reposUIModel.repositoryFork
-        repositoryWatch = reposUIModel.repositoryWatch
-        hideWatchIcon = reposUIModel.hideWatchIcon
-        repositoryType = reposUIModel.repositoryType
-        repositoryDes = reposUIModel.repositoryDes
-        repositorySize = reposUIModel.repositorySize
-        repositoryLicense = reposUIModel.repositoryLicense
-        repositoryAction = reposUIModel.repositoryAction
-        repositoryIssue = reposUIModel.repositoryIssue
-    }
+    /**仅用于 LazyColumn 的key*/
+    var lazyColumnKey: String = UUID.randomUUID().toString()
 }

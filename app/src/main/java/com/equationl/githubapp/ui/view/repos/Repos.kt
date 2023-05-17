@@ -72,6 +72,8 @@ fun RepoDetailScreen(
     val scaffoldState = rememberBottomSheetScaffoldState()
     val coroutineScope = rememberCoroutineScope()
 
+    var pagerUserScrollEnabled by remember { mutableStateOf(true) }
+
     LaunchedEffect(Unit) {
         viewModel.viewEvents.collect {
             when (it) {
@@ -91,6 +93,8 @@ fun RepoDetailScreen(
 
         withContext(Dispatchers.IO) {
             snapshotFlow { pagerState.currentPage }.collect { page ->
+                // 如果是 README 页面则禁止 pager 滑动，否则会有滑动冲突
+                pagerUserScrollEnabled = page != ReposPager.Readme.ordinal
                 viewModel.dispatch(ReposViewAction.ScrollTo(ReposPager.values()[page]))
             }
         }
@@ -154,7 +158,7 @@ fun RepoDetailScreen(
                 }
             )
 
-            MainContent(pagerState, navController, scaffoldState, repoName, repoOwner)
+            MainContent(pagerState, navController, scaffoldState, repoName, repoOwner, pagerUserScrollEnabled)
         }
     }
 }
@@ -167,14 +171,22 @@ fun MainContent(
     scaffoldState: BottomSheetScaffoldState,
     repoName: String?,
     repoOwner: String?,
+    userScrollEnabled: Boolean
 ) {
+    val coroutineScope = rememberCoroutineScope()
+
     HorizontalPager(
         pageCount = 4,
-        state = pagerState
+        state = pagerState,
+        userScrollEnabled = userScrollEnabled
     ) { page ->
         when (page) {
             0 -> ReposReadmeContent(userName = repoOwner ?: "", reposName = repoName ?: "", scaffoldState)
-            1 -> ReposActionContent(userName = repoOwner ?: "", reposName = repoName ?: "", scaffoldState, navController)
+            1 -> ReposActionContent(userName = repoOwner ?: "", reposName = repoName ?: "", scaffoldState, navController, onChangePager = {
+                coroutineScope.launch {
+                    pagerState.animateScrollToPage(it.ordinal)
+                }
+            })
             2 -> ReposFileContent(userName = repoOwner ?: "", repoName = repoName ?: "", scaffoldState, navController)
             3 -> ReposIssueContent(userName = repoOwner ?: "", reposName = repoName ?: "", scaffoldState, navController)
         }

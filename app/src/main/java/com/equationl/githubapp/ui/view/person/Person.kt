@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.equationl.githubapp.common.route.Route
 import com.equationl.githubapp.common.utlis.CommonUtils
 import com.equationl.githubapp.model.bean.User
 import com.equationl.githubapp.ui.common.AvatarContent
@@ -35,9 +36,10 @@ import com.equationl.githubapp.ui.common.CustomWebView
 import com.equationl.githubapp.ui.common.LinkText
 import com.equationl.githubapp.ui.common.MoreMenu
 import com.equationl.githubapp.ui.common.TopBar
-import com.equationl.githubapp.ui.view.dynamic.DynamicRefreshContent
 import com.equationl.githubapp.ui.view.dynamic.DynamicViewAction
 import com.equationl.githubapp.ui.view.dynamic.DynamicViewEvent
+import com.equationl.githubapp.ui.view.dynamic.EventRefreshContent
+import com.equationl.githubapp.ui.view.list.GeneralListEnum
 import com.equationl.githubapp.util.datastore.DataKey
 import com.equationl.githubapp.util.datastore.DataStoreUtils
 import com.equationl.githubapp.util.fromJson
@@ -51,6 +53,7 @@ fun PersonScreen(
     navController: NavHostController,
     viewModel: PersonViewModel = hiltViewModel()
 ) {
+    // TODO 没有加上关注与取关（使用 FloatActionButton）
     val context = LocalContext.current
     val scaffoldState = rememberBottomSheetScaffoldState()
 
@@ -139,7 +142,7 @@ fun PersonContent(
     }
     else {
         val dynamicList = viewState.dynamicFlow.collectAsLazyPagingItems()
-        DynamicRefreshContent(
+        EventRefreshContent(
             navHostController = navController,
             eventPagingItems = dynamicList,
             onLoadError = {
@@ -199,7 +202,9 @@ fun PersonHeader(
                         Icon(
                             imageVector = Icons.Filled.Notifications,
                             contentDescription = "Notifications",
-                            modifier = Modifier.clickable { /*TODO*/ }
+                            modifier = Modifier.padding(start = 6.dp).clickable {
+                                navController.navigate(Route.NOTIFY)
+                            }
                         )
                     }
 
@@ -245,25 +250,25 @@ fun PersonHeader(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 VerticalText(topText = "仓库", bottomText = user.publicRepos.toString(), modifier = Modifier.clickable {
-                    // TODO
+                    navController.navigate("${Route.REPO_LIST}/null/${user.login}/${GeneralListEnum.UserRepository.name}")
                 })
                 Divider(modifier = Modifier
                     .fillMaxHeight()
                     .width(1.dp))
                 VerticalText(topText = "粉丝", bottomText = user.followers.toString(), modifier = Modifier.clickable {
-                    // TODO
+                    navController.navigate("${Route.USER_LIST}/null/${user.login}/${GeneralListEnum.UserFollower.name}")
                 })
                 Divider(modifier = Modifier
                     .fillMaxHeight()
                     .width(1.dp))
                 VerticalText(topText = "关注", bottomText = user.following.toString(), modifier = Modifier.clickable {
-                    // TODO
+                    navController.navigate("${Route.USER_LIST}/null/${user.login}/${GeneralListEnum.UserFollowed.name}")
                 })
                 Divider(modifier = Modifier
                     .fillMaxHeight()
                     .width(1.dp))
                 VerticalText(topText = "星标", bottomText = user.starRepos.toString(), modifier = Modifier.clickable {
-                    // TODO
+                    navController.navigate("${Route.REPO_LIST}/null/${user.login}/${GeneralListEnum.UserStar.name}")
                 })
                 Divider(modifier = Modifier
                     .fillMaxHeight()

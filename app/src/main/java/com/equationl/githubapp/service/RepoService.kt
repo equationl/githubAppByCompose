@@ -43,7 +43,7 @@ interface RepoService {
      * List user repositories
      */
     @GET("users/{user}/repos")
-    fun getUserPublicRepos(
+    suspend fun getUserPublicRepos(
             @Header("forceNetWork") forceNetWork: Boolean,
             @Path("user") user: String,
             @Query("page") page: Int,
@@ -130,7 +130,7 @@ interface RepoService {
     ):Response<ArrayList<Branch>>
 
     @GET("repos/{owner}/{repo}/stargazers")
-    fun getStargazers(
+    suspend fun getStargazers(
             @Header("forceNetWork") forceNetWork: Boolean,
             @Path(value = "owner") owner: String,
             @Path(value = "repo") repo: String,
@@ -138,7 +138,7 @@ interface RepoService {
     ):Response<ArrayList<User>>
 
     @GET("repos/{owner}/{repo}/subscribers")
-    fun getWatchers(
+    suspend fun getWatchers(
             @Header("forceNetWork") forceNetWork: Boolean,
             @Path("owner") owner: String,
             @Path("repo") repo: String,
@@ -159,7 +159,7 @@ interface RepoService {
     ):Response<Repository>
 
     @GET("repos/{owner}/{repo}/forks")
-    fun getForks(
+    suspend fun getForks(
             @Header("forceNetWork") forceNetWork: Boolean,
             @Path("owner") owner: String,
             @Path("repo") repo: String,
@@ -191,7 +191,7 @@ interface RepoService {
 
 
     @GET("repos/{owner}/{repo}/releases")
-    fun getReleasesNotHtml(
+    suspend fun getReleasesNotHtml(
             @Header("forceNetWork") forceNetWork: Boolean,
             @Path("owner") owner: String,
             @Path("repo") repo: String,

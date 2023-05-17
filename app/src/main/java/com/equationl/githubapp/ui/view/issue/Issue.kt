@@ -82,7 +82,7 @@ fun IssueDetailScreen(
 
     var editIssue: IssueUIModel? by remember { mutableStateOf(null) }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(commentList) {
         viewModel.viewEvents.collect {
             when (it) {
                 is IssueEvent.ShowMsg -> {
@@ -90,7 +90,7 @@ fun IssueDetailScreen(
                 }
 
                 is IssueEvent.Refresh -> {
-                    commentList?.refresh() // fixme commentList always == null
+                    commentList?.refresh()
                 }
             }
         }
@@ -395,6 +395,7 @@ private fun CommentRefreshContent(
             state = rememberSwipeRefreshState,
             onRefresh = {
                 commentPagingItems.refresh()
+                onRefresh?.invoke()
             },
             modifier = Modifier.fillMaxSize()
         ) {
@@ -406,11 +407,6 @@ private fun CommentRefreshContent(
             )
         }
     }
-
-    if (rememberSwipeRefreshState.isRefreshing) {
-        onRefresh?.invoke()
-    }
-
 }
 
 @Composable

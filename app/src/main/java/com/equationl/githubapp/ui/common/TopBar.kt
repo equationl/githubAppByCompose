@@ -8,7 +8,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
-import com.equationl.githubapp.ui.view.main.MainPager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,25 +27,10 @@ fun TopBar(title: String, navigationIcon: ImageVector = Icons.Filled.ArrowBack, 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeTopBar(title: String, navigationIcon: ImageVector, mainPager: MainPager, actions: @Composable RowScope.() -> Unit = {}, onBack: () -> Unit) {
+fun HomeTopBar(title: String, navigationIcon: ImageVector, actions: @Composable RowScope.() -> Unit = {}, onBack: () -> Unit) {
     TopAppBar (
         title = {
             Text(text = title, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            /*AnimatedContent(
-                targetState = title,
-                transitionSpec = {
-                    if (currentPager == CurrentPager.HOME_ME) {
-                        slideInHorizontally { width -> width } + fadeIn() with
-                                slideOutHorizontally { width -> -width } + fadeOut()
-                    }
-                    else {
-                        slideInHorizontally { width -> -width } + fadeIn() with
-                                slideOutHorizontally { width -> width } + fadeOut()
-                    }
-                }
-            ) { targetTitle ->
-                Text(text = targetTitle, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }*/
         },
         navigationIcon = {
             IconButton(onClick = onBack) {

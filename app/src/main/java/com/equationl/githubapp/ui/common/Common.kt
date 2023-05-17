@@ -99,6 +99,11 @@ fun AvatarContent(
 }
 
 @Composable
-fun EmptyItem() {
-    Text(text = "暂时没有任何数据哦～")
+fun EmptyItem(isNotInit: Boolean = false) {
+    if (isNotInit) {
+        Text(text = "暂时没有任何数据哦~~")
+    }
+    else {
+        Text(text = "暂时没有任何数据哦～")
+    }
 }

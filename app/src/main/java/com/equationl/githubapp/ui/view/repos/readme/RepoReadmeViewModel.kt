@@ -4,8 +4,10 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.equationl.githubapp.common.utlis.HtmlUtils
 import com.equationl.githubapp.service.RepoService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -33,11 +35,11 @@ class RepoReadmeViewModel @Inject constructor(
 
     fun dispatch(action: RepoReadMeAction) {
         when (action) {
-            is RepoReadMeAction.GetReadmeContent -> getReadmeContent(action.repoName, action.ownerName)
+            is RepoReadMeAction.GetReadmeContent -> getReadmeContent(action.repoName, action.ownerName, action.backgroundColor, action.primaryColor)
         }
     }
 
-    private fun getReadmeContent(repoName: String, ownerName: String) {
+    private fun getReadmeContent(repoName: String, ownerName: String, backgroundColor: Color, primaryColor: Color) {
         viewModelScope.launch(exception) {
             val response = repoService.getReadmeHtml(true, ownerName, repoName)
             if (response.isSuccessful) {
@@ -47,7 +49,7 @@ class RepoReadmeViewModel @Inject constructor(
                 }
                 else {
                     viewStates = viewStates.copy(
-                        readmeContent = body
+                        readmeContent = HtmlUtils.generateHtml(body, backgroundColor, primaryColor)
                     )
                 }
             }
@@ -70,7 +72,7 @@ data class RepoReadmeState(
 )
 
 sealed class RepoReadMeAction {
-    data class GetReadmeContent(val repoName: String, val ownerName: String): RepoReadMeAction()
+    data class GetReadmeContent(val repoName: String, val ownerName: String, val backgroundColor: Color, val primaryColor: Color): RepoReadMeAction()
 }
 
 sealed class RepoReadMeEvent {

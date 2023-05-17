@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewModelScope
 import com.equationl.githubapp.common.utlis.CommonUtils
 import com.equationl.githubapp.common.utlis.browse
@@ -37,7 +38,7 @@ class PushViewModel @Inject constructor(
         super.dispatch(action)
 
         when (action) {
-            is PushAction.LoadData -> loadData(action.context, action.userName, action.repoName, action.sha)
+            is PushAction.LoadData -> loadData(action.userName, action.repoName, action.sha, action.backGroundColor, action.primaryColor)
             is PushAction.GoTo -> goTo(action.routePath)
             is PushAction.ClickMoreMenu -> clickMoreMenu(action.context, action.pos, action.userName, action.repoName, action.sha)
         }
@@ -59,20 +60,19 @@ class PushViewModel @Inject constructor(
         }
     }
 
-    private fun loadData(context: Context, userName: String, repoName: String, sha: String) {
+    private fun loadData(userName: String, repoName: String, sha: String, backGroundColor: Color, primaryColor: Color) {
         viewStates = viewStates.copy(isRefresh = true)
         viewModelScope.launch(exception) {
             val response = commitService.getCommitInfo(true, userName, repoName, sha)
             if (response.isSuccessful) {
                 val body = response.body()
-                if (body == null) {
+                viewStates = if (body == null) {
                     _viewEvents.trySend(BaseEvent.ShowMsg("body is null!"))
-                    viewStates = viewStates.copy(isRefresh = false)
-                }
-                else {
+                    viewStates.copy(isRefresh = false)
+                } else {
                     val pushInfo = ReposConversion.pushInfoToPushUIModel(body)
-                    val fileList = body.files?.map { ReposConversion.repoCommitToFileUIModel(context, it) }
-                    viewStates = viewStates.copy(
+                    val fileList = body.files?.map { ReposConversion.repoCommitToFileUIModel(it, backGroundColor, primaryColor) }
+                    viewStates.copy(
                         isRefresh = false,
                         pushUIModel = pushInfo,
                         fileUiModel = fileList ?: listOf()
@@ -99,7 +99,7 @@ data class PushState(
 )
 
 sealed class PushAction: BaseAction() {
-    data class LoadData(val context: Context, val userName: String, val repoName: String, val sha: String): PushAction()
+    data class LoadData(val userName: String, val repoName: String, val sha: String, val backGroundColor: Color, val primaryColor: Color): PushAction()
     data class GoTo(val routePath: String): PushAction()
     data class ClickMoreMenu(val context: Context, val pos: Int, val userName: String, val repoName: String, val sha: String): PushAction()
 }

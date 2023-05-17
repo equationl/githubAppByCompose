@@ -42,6 +42,7 @@ class RepoIssuePagingSource(
 
             Log.i("el", "load: 总页数 = $totalPage")
 
+            @Suppress("UNCHECKED_CAST")
             val issueUiModel = if (queryParameter.queryString.isBlank()) {
                 val body = (response.body() ?: arrayListOf<Issue>()) as ArrayList<Issue>
                 body.map { IssueConversion.issueToIssueUIModel(it) }

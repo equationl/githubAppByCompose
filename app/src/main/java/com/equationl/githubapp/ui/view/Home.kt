@@ -12,13 +12,18 @@ import com.equationl.githubapp.common.route.RouteParams
 import com.equationl.githubapp.ui.view.code.CodeDetailScreen
 import com.equationl.githubapp.ui.view.image.ImageScreen
 import com.equationl.githubapp.ui.view.issue.IssueDetailScreen
+import com.equationl.githubapp.ui.view.list.GeneralListEnum
+import com.equationl.githubapp.ui.view.list.generalRepo.GeneralRepoListScreen
+import com.equationl.githubapp.ui.view.list.generalUser.GeneralUserListScreen
 import com.equationl.githubapp.ui.view.login.LoginScreen
 import com.equationl.githubapp.ui.view.login.OAuthLoginScreen
 import com.equationl.githubapp.ui.view.main.MainScreen
+import com.equationl.githubapp.ui.view.notify.NotifyScreen
 import com.equationl.githubapp.ui.view.person.PersonScreen
 import com.equationl.githubapp.ui.view.push.PushDetailScreen
 import com.equationl.githubapp.ui.view.repos.RepoDetailScreen
 import com.equationl.githubapp.ui.view.search.SearchScreen
+import com.equationl.githubapp.ui.view.userInfo.UserInfoScreen
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
@@ -51,9 +56,21 @@ fun HomeNavHost(
             }
         }
 
+        composable(Route.NOTIFY) {
+            Column(Modifier.systemBarsPadding()) {
+                NotifyScreen(navHostController = navController)
+            }
+        }
+
+        composable(Route.USER_INFO) {
+            Column(Modifier.systemBarsPadding()) {
+                UserInfoScreen(navHostController = navController)
+            }
+        }
+
         composable(Route.SEARCH) {
             Column(Modifier.systemBarsPadding()) {
-                SearchScreen()
+                SearchScreen(navHostController = navController)
             }
         }
 
@@ -201,6 +218,68 @@ fun HomeNavHost(
 
             Column(Modifier.systemBarsPadding()) {
                 ImageScreen(image = imageUrl ?: "", navController = navController)
+            }
+        }
+
+        composable("${Route.REPO_LIST}/{${RouteParams.PAR_REPO_PATH}}/{${RouteParams.PAR_REPO_OWNER}}/{${RouteParams.PAR_REPO_REQUEST_TYPE}}",
+            arguments = listOf(
+                navArgument(RouteParams.PAR_REPO_PATH) {
+                    type = NavType.StringType
+                    nullable = false
+                },
+                navArgument(RouteParams.PAR_REPO_OWNER) {
+                    type = NavType.StringType
+                    nullable = false
+                },
+                navArgument(RouteParams.PAR_REPO_REQUEST_TYPE) {
+                    type = NavType.StringType
+                    nullable = false
+                }
+            )) {
+            val argument = requireNotNull(it.arguments)
+            val userName = argument.getString(RouteParams.PAR_REPO_OWNER)
+            val repoName = argument.getString(RouteParams.PAR_REPO_PATH)
+            val requestTypeString = argument.getString(RouteParams.PAR_REPO_REQUEST_TYPE)
+            val requestType = GeneralListEnum.valueOf(requestTypeString ?: "")
+
+            Column(Modifier.systemBarsPadding()) {
+                GeneralRepoListScreen(
+                    repoName ?: "",
+                    userName ?: "",
+                    requestType = requestType,
+                    navController
+                )
+            }
+        }
+
+        composable("${Route.USER_LIST}/{${RouteParams.PAR_REPO_PATH}}/{${RouteParams.PAR_REPO_OWNER}}/{${RouteParams.PAR_REPO_REQUEST_TYPE}}",
+            arguments = listOf(
+                navArgument(RouteParams.PAR_REPO_PATH) {
+                    type = NavType.StringType
+                    nullable = false
+                },
+                navArgument(RouteParams.PAR_REPO_OWNER) {
+                    type = NavType.StringType
+                    nullable = false
+                },
+                navArgument(RouteParams.PAR_REPO_REQUEST_TYPE) {
+                    type = NavType.StringType
+                    nullable = false
+                }
+            )) {
+            val argument = requireNotNull(it.arguments)
+            val userName = argument.getString(RouteParams.PAR_REPO_OWNER)
+            val repoName = argument.getString(RouteParams.PAR_REPO_PATH)
+            val requestTypeString = argument.getString(RouteParams.PAR_REPO_REQUEST_TYPE)
+            val requestType = GeneralListEnum.valueOf(requestTypeString ?: "")
+
+            Column(Modifier.systemBarsPadding()) {
+                GeneralUserListScreen(
+                    repoName ?: "",
+                    userName ?: "",
+                    requestType = requestType,
+                    navController
+                )
             }
         }
     }

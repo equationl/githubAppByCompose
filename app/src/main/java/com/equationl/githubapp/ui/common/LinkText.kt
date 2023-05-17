@@ -12,8 +12,8 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun LinkText(
     text: String,
-    textDecoration: TextDecoration = TextDecoration.Underline,
     modifier: Modifier = Modifier,
+    textDecoration: TextDecoration = TextDecoration.Underline,
     fontSize: TextUnit = 12.sp,
     color: Color = MaterialTheme.colorScheme.primary,
     onClick: () -> Unit) {

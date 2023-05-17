@@ -8,6 +8,7 @@ import androidx.compose.material.icons.outlined.MoreHoriz
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
@@ -43,6 +44,9 @@ fun CodeDetailScreen(
     val viewState = viewModel.viewStates
     val scaffoldState = rememberBottomSheetScaffoldState()
 
+    val backgroundColor = MaterialTheme.colorScheme.background
+    val primaryColor = MaterialTheme.colorScheme.primary
+
     LaunchedEffect(Unit) {
         viewModel.viewEvents.collect {
             when (it) {
@@ -54,7 +58,7 @@ fun CodeDetailScreen(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.dispatch(CodeDetailAction.LoadDate(context, userName, reposName, path, localCode))
+        viewModel.dispatch(CodeDetailAction.LoadDate(context, userName, reposName, path, localCode, backgroundColor, primaryColor))
     }
 
     Scaffold(

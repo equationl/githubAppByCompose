@@ -120,8 +120,8 @@ class IssueViewModel @Inject constructor(
                     _viewEvents.trySend(IssueEvent.ShowMsg("body is null!"))
                 }
                 else {
-                    _viewEvents.trySend(IssueEvent.ShowMsg("回复成功"))
                     _viewEvents.trySend(IssueEvent.Refresh)
+                    _viewEvents.trySend(IssueEvent.ShowMsg("回复成功"))
                 }
             }
             else {
@@ -141,8 +141,8 @@ class IssueViewModel @Inject constructor(
                     _viewEvents.trySend(IssueEvent.ShowMsg("body is null!"))
                 }
                 else {
-                    _viewEvents.trySend(IssueEvent.ShowMsg("编辑成功"))
                     _viewEvents.trySend(IssueEvent.Refresh)
+                    _viewEvents.trySend(IssueEvent.ShowMsg("编辑成功"))
                 }
             }
             else {

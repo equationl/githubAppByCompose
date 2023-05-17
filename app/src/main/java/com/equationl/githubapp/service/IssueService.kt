@@ -112,7 +112,7 @@ interface IssueService {
 
     @POST("repos/{owner}/{repo}/issues")
     @Headers("Accept: application/vnd.github.html,application/vnd.github.VERSION.raw")
-    fun createIssue(
+    suspend fun createIssue(
             @Path("owner") owner: String,
             @Path("repo") repo: String,
             @Body body: Issue

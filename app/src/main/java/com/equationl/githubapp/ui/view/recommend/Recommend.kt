@@ -15,8 +15,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import com.equationl.githubapp.common.constant.LanguageFilter
 import com.equationl.githubapp.common.route.Route
-import com.equationl.githubapp.model.bean.TrendingRepoModel
+import com.equationl.githubapp.model.ui.ReposUIModel
 import com.equationl.githubapp.ui.common.AvatarContent
 import com.equationl.githubapp.ui.common.VerticalIconText
 import com.google.accompanist.swiperefresh.SwipeRefresh
@@ -68,11 +69,11 @@ fun RecommendContent(
 }
 
 @Composable
-fun FilterHeader(
+private fun FilterHeader(
     sinceFilter: RecommendSinceFilter,
-    languageFilter: RecommendLanguageFilter,
+    languageFilter: LanguageFilter,
     onChangeSinceFilter: (choiceItem: RecommendSinceFilter) -> Unit,
-    onChangeLanguageFilter: (choiceItem: RecommendLanguageFilter) -> Unit
+    onChangeLanguageFilter: (choiceItem: LanguageFilter) -> Unit
 ) {
     Row(
         horizontalArrangement = Arrangement.SpaceEvenly,
@@ -84,12 +85,12 @@ fun FilterHeader(
         Divider(modifier = Modifier
             .fillMaxHeight()
             .width(1.dp))
-        FilterDropMenu(title = languageFilter.showName, options = RecommendLanguageFilter.values(), onChoice = onChangeLanguageFilter)
+        FilterDropMenu(title = languageFilter.showName, options = LanguageFilter.values(), onChoice = onChangeLanguageFilter)
     }
 }
 
 @Composable
-fun <T>FilterDropMenu(
+private fun <T>FilterDropMenu(
     title: String,
     options: Array<T>,
     onChoice: (choiceItem: T) -> Unit
@@ -115,7 +116,7 @@ fun <T>FilterDropMenu(
                 DropdownMenuItem(
                     text = {
                         when (item) {
-                            is RecommendLanguageFilter -> {
+                            is LanguageFilter -> {
                                 Text(text = item.showName)
                             }
                             is RecommendSinceFilter -> {
@@ -136,7 +137,7 @@ fun <T>FilterDropMenu(
 @Composable
 private fun RecommendRefreshContent(
     isRefreshing: Boolean,
-    dataList: List<TrendingRepoModel>,
+    dataList: List<ReposUIModel>,
     navController: NavHostController,
     onRefresh: () -> Unit
 ) {
@@ -155,7 +156,7 @@ private fun RecommendRefreshContent(
 
 @Composable
 private fun RecommendLazyColumn(
-    dataList: List<TrendingRepoModel>,
+    dataList: List<ReposUIModel>,
     navController: NavHostController,
 ) {
     LazyColumn(
@@ -166,11 +167,11 @@ private fun RecommendLazyColumn(
         items(
             items = dataList,
             key = {
-                it.url
+                it.lazyColumnKey
             }
         ) {
             RepoItem(it, navController) {
-                navController.navigate("${Route.REPO_DETAIL}/${it.reposName}/${it.name}")
+                navController.navigate("${Route.REPO_DETAIL}/${it.repositoryName}/${it.ownerName}")
             }
         }
     }
@@ -179,7 +180,7 @@ private fun RecommendLazyColumn(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RepoItem(
-    data: TrendingRepoModel,
+    data: ReposUIModel,
     navController: NavHostController,
     onClick: () -> Unit
 ) {
@@ -194,40 +195,40 @@ fun RepoItem(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     AvatarContent(
-                        data = data.contributors[0],
+                        data = data.ownerPic,
                         navHostController = navController,
-                        userName = data.name
+                        userName = data.ownerName
                     )
 
                     Column(
                         modifier = Modifier.padding(start = 4.dp)
                     ) {
                         Text(
-                            text = data.reposName,
+                            text = data.repositoryName,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Row {
                             Icon(imageVector = Icons.Filled.Person, contentDescription = null)
-                            Text(text = data.name)
+                            Text(text = data.ownerName)
                         }
                     }
                 }
 
-                Text(text = data.language)
+                Text(text = data.repositoryType)
             }
 
             HtmlText(
-                text = data.description
+                text = data.repositoryDes
             )
 
             Row(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                VerticalIconText(icon = Icons.Filled.StarBorder, text = data.starCount)
-                VerticalIconText(icon = Icons.Filled.Share, text = data.forkCount)
-                VerticalIconText(icon = Icons.Filled.Visibility, text = data.meta)
+                VerticalIconText(icon = Icons.Filled.StarBorder, text = data.repositoryStar)
+                VerticalIconText(icon = Icons.Filled.Share, text = data.repositoryFork)
+                VerticalIconText(icon = Icons.Filled.Visibility, text = data.repositoryWatch)
             }
         }
     }
