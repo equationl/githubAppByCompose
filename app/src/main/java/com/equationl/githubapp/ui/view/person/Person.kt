@@ -32,6 +32,8 @@ import com.equationl.githubapp.common.route.Route
 import com.equationl.githubapp.common.utlis.CommonUtils
 import com.equationl.githubapp.model.bean.User
 import com.equationl.githubapp.ui.common.AvatarContent
+import com.equationl.githubapp.ui.common.BaseAction
+import com.equationl.githubapp.ui.common.BaseEvent
 import com.equationl.githubapp.ui.common.CustomWebView
 import com.equationl.githubapp.ui.common.LinkText
 import com.equationl.githubapp.ui.common.MoreMenu
@@ -40,6 +42,9 @@ import com.equationl.githubapp.ui.view.dynamic.DynamicViewAction
 import com.equationl.githubapp.ui.view.dynamic.DynamicViewEvent
 import com.equationl.githubapp.ui.view.dynamic.EventRefreshContent
 import com.equationl.githubapp.ui.view.list.GeneralListEnum
+import com.equationl.githubapp.ui.view.list.generalUser.GeneralUserListAction
+import com.equationl.githubapp.ui.view.list.generalUser.GeneralUserListViewModel
+import com.equationl.githubapp.ui.view.list.generalUser.UserListContent
 import com.equationl.githubapp.util.datastore.DataKey
 import com.equationl.githubapp.util.datastore.DataStoreUtils
 import com.equationl.githubapp.util.fromJson
@@ -53,7 +58,6 @@ fun PersonScreen(
     navController: NavHostController,
     viewModel: PersonViewModel = hiltViewModel()
 ) {
-    // TODO 没有加上关注与取关（使用 FloatActionButton）
     val context = LocalContext.current
     val scaffoldState = rememberBottomSheetScaffoldState()
 
@@ -84,6 +88,14 @@ fun PersonScreen(
             SnackbarHost(hostState = scaffoldState.snackbarHostState) { snackBarData ->
                 Snackbar(snackbarData = snackBarData)
             }
+        },
+        floatingActionButton = {
+            val focusState = viewModel.personViewState.isFollow
+            if (focusState != IsFollow.NotNeed) {
+                FloatingActionButton(onClick = { viewModel.dispatch(PersonAction.ChangeFollowState) }) {
+                    Text(text = if (focusState == IsFollow.Followed) "取关" else "关注")
+                }
+            }
         }
     ) {
         Column(
@@ -110,8 +122,7 @@ fun PersonContent(
     onEnablePagerScroll: ((enable: Boolean) -> Unit)? = null,
     viewModel: PersonViewModel = hiltViewModel()
 ) {
-    val viewState = viewModel.viewStates
-    val personViewState = viewModel.personViewState
+    val userInfo: User? = remember { DataStoreUtils.getSyncData(DataKey.UserInfo, "").fromJson() }
 
     LaunchedEffect(Unit) {
         if (userName != null) {
@@ -119,7 +130,6 @@ fun PersonContent(
             viewModel.dispatch(DynamicViewAction.SetData(userName))
         }
         else {
-            val userInfo: User? = DataStoreUtils.getSyncData(DataKey.UserInfo, "").fromJson()
             viewModel.dispatch(DynamicViewAction.SetData((userInfo?.login) ?: ""))
         }
 
@@ -136,6 +146,88 @@ fun PersonContent(
             }
         }
     }
+
+    when (viewModel.personViewState.user.type) {
+        null -> { // 数据还没初始化
+            PersonHeader(
+                user = User(),
+                navController = navController,
+                isLoginUser = false,
+                withChartMap = false
+            )
+        }
+        "Organization" -> {  // 当前是一个组织，显示组织成员
+            OrgMember(
+                viewModel.personViewState.user,
+                scaffoldState,
+                navController
+            )
+        }
+        else -> { // 当前是一个个人用户，显示用户动态
+            PersonDynamic(
+                navController = navController,
+                viewModel = viewModel,
+                isLoginUser = (userName == null || userInfo?.login == userName),
+                onEnablePagerScroll = onEnablePagerScroll
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun OrgMember(
+    user: User,
+    scaffoldState: BottomSheetScaffoldState,
+    navController: NavHostController
+) {
+    val userListViewModel: GeneralUserListViewModel = hiltViewModel()
+    val userListState = userListViewModel.viewStates
+
+    LaunchedEffect(Unit) {
+        userListViewModel.dispatch(GeneralUserListAction.SetData(user.login ?: "", "", GeneralListEnum.OrgMembers))
+
+        userListViewModel.viewEvents.collect {
+            when (it) {
+                is BaseEvent.ShowMsg -> {
+                    scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                }
+            }
+        }
+    }
+
+    val userList = userListState.userListFlow?.collectAsLazyPagingItems()
+
+    UserListContent(
+        userPagingItems = userList,
+        onLoadError = { msg ->
+            userListViewModel.dispatch(BaseAction.ShowMag(msg))
+        },
+        onClickItem = { userUiModel ->
+            navController.navigate("${Route.PERSON_DETAIL}/${userUiModel.login}")
+        },
+        headerItem = {
+            item {
+                PersonHeader(
+                    user = user,
+                    navController = navController,
+                    isLoginUser = false,
+                    withChartMap = false
+                )
+            }
+        }
+    )
+}
+
+@Composable
+private fun PersonDynamic(
+    navController: NavHostController,
+    viewModel: PersonViewModel,
+    isLoginUser: Boolean,
+    onEnablePagerScroll: ((enable: Boolean) -> Unit)?
+) {
+    val personViewState = viewModel.personViewState
+    val viewState = viewModel.viewStates
 
     if (viewState.dynamicFlow == null) {
         Text(text = "Need init")
@@ -154,12 +246,10 @@ fun PersonContent(
             headerItem = {
                 item(key = "header") {
                     PersonHeader(
-                        personViewState.user,
-                        navController,
+                        user = personViewState.user,
+                        navController = navController,
+                        isLoginUser = isLoginUser,
                         onEnablePagerScroll = onEnablePagerScroll,
-                        onShowMSg = {
-                            viewModel.dispatch(DynamicViewAction.ShowMsg(it))
-                        }
                     )
                 }
             },
@@ -174,7 +264,8 @@ fun PersonContent(
 fun PersonHeader(
     user: User,
     navController: NavHostController,
-    onShowMSg: (msg: String) -> Unit,
+    isLoginUser: Boolean,
+    withChartMap: Boolean = true,
     onEnablePagerScroll: ((enable: Boolean) -> Unit)? = null
 ) {
     val context = LocalContext.current
@@ -188,8 +279,9 @@ fun PersonHeader(
                 AvatarContent(
                     data = user.avatarUrl ?: "",
                     size = DpSize(50.dp, 50.dp),
-                    userName = user.login ?: "",
-                    navHostController = navController
+                    onClick = {
+                           navController.navigate("${Route.IMAGE_PREVIEW}/${Uri.encode(user.avatarUrl)}")
+                    }
                 )
 
                 Column(modifier = Modifier.padding(start = 4.dp)) {
@@ -199,13 +291,17 @@ fun PersonHeader(
                             fontSize = 23.sp
                         )
 
-                        Icon(
-                            imageVector = Icons.Filled.Notifications,
-                            contentDescription = "Notifications",
-                            modifier = Modifier.padding(start = 6.dp).clickable {
-                                navController.navigate(Route.NOTIFY)
-                            }
-                        )
+                        if (isLoginUser) {
+                            Icon(
+                                imageVector = Icons.Filled.Notifications,
+                                contentDescription = "Notifications",
+                                modifier = Modifier
+                                    .padding(start = 6.dp)
+                                    .clickable {
+                                        navController.navigate(Route.NOTIFY)
+                                    }
+                            )
+                        }
                     }
 
                     user.name?.let {
@@ -274,44 +370,46 @@ fun PersonHeader(
                     .fillMaxHeight()
                     .width(1.dp))
                 VerticalText(topText = "荣耀", bottomText = user.honorRepos.toString(), modifier = Modifier.clickable {
-                    onShowMSg("最新更新的前 100 个仓库 Star 总和")
+                    navController.navigate("${Route.REPO_LIST}/null/${user.login}/${GeneralListEnum.UserHonor.name}")
                 })
             }
         }
 
-        Card(modifier = Modifier
-            .fillMaxWidth()
-            .padding(4.dp)
-        ) {
-            CustomWebView(
-                url = CommonUtils.getUserChartAddress(user.login ?: "", MaterialTheme.colorScheme.primary),
-                onTouchEvent = {
-                    when (it.action) {
-                        MotionEvent.ACTION_DOWN -> {
-                            onEnablePagerScroll?.invoke(false)
-                            false
-                        }
-                        MotionEvent.ACTION_UP -> {
-                            onEnablePagerScroll?.invoke(true)
-                            false
-                        }
-                        MotionEvent.ACTION_CANCEL -> {
-                            onEnablePagerScroll?.invoke(true)
-                            false
-                        }
-                        else -> {
-                            false
+        if (withChartMap) {
+            Card(modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp)
+            ) {
+                CustomWebView(
+                    url = CommonUtils.getUserChartAddress(user.login ?: "", MaterialTheme.colorScheme.primary),
+                    onTouchEvent = {
+                        when (it.action) {
+                            MotionEvent.ACTION_DOWN -> {
+                                onEnablePagerScroll?.invoke(false)
+                                false
+                            }
+                            MotionEvent.ACTION_UP -> {
+                                onEnablePagerScroll?.invoke(true)
+                                false
+                            }
+                            MotionEvent.ACTION_CANCEL -> {
+                                onEnablePagerScroll?.invoke(true)
+                                false
+                            }
+                            else -> {
+                                false
+                            }
                         }
                     }
-                }
-            )
+                )
+            }
         }
     }
 }
 
 @Composable
 private fun IconText(imageVector: ImageVector, text: String, hideWhenTextBlank: Boolean = true) {
-    if (!hideWhenTextBlank && text.isNotEmpty()) {
+    if (!hideWhenTextBlank || text.isNotEmpty()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(imageVector = imageVector, contentDescription = null)
             Text(text = text)
@@ -320,7 +418,7 @@ private fun IconText(imageVector: ImageVector, text: String, hideWhenTextBlank: 
 }
 
 @Composable
-fun VerticalText(topText: String, bottomText: String, modifier: Modifier = Modifier) {
+private fun VerticalText(topText: String, bottomText: String, modifier: Modifier = Modifier) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier) {
         Text(text = topText)
         Text(text = bottomText)

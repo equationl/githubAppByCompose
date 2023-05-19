@@ -14,7 +14,6 @@ import java.util.concurrent.TimeUnit
 import java.util.logging.Level
 
 object RetrofitFactory {
-    // FIXME 注意这里的 token 拦截器有问题，如果 token 为空，登录后添加 token 将是无效的
     fun getOkhttpClient(): OkHttpClient {
         val logging = HttpLoggingInterceptor("HttpLog").apply {
             setPrintLevel(if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.BASIC)
@@ -24,9 +23,9 @@ object RetrofitFactory {
         return OkHttpClient.Builder()
             .connectTimeout(AppConfig.HTTP_TIME_OUT, TimeUnit.SECONDS)
             .readTimeout(AppConfig.READ_TIME_OUT, TimeUnit.SECONDS)
-            .addInterceptor(logging)
             .addInterceptor(headerInterceptor())
             .addInterceptor(PageInfoInterceptor())
+            .addInterceptor(logging)
             .proxy(Proxy.NO_PROXY)
             .build()
     }

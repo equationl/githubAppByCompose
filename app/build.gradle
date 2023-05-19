@@ -99,7 +99,7 @@ dependencies {
         exclude group: 'stax', module: 'stax'
     }
     // implementation 'com.squareup.okhttp3:logging-interceptor:4.9.3'
-    implementation "com.airbnb.android:lottie-compose:5.0.3"
+    implementation "com.airbnb.android:lottie-compose:6.0.0"
     implementation "io.github.vanpra.compose-material-dialogs:datetime:0.8.1-rc"
     implementation "io.github.vanpra.compose-material-dialogs:color:0.8.1-rc"
 

@@ -1,7 +1,5 @@
 package com.equationl.githubapp.ui.view.search
 
-import android.util.Log
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,7 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.Card
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -40,8 +37,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -56,9 +54,10 @@ import com.equationl.githubapp.model.ui.ReposUIModel
 import com.equationl.githubapp.model.ui.UserUIModel
 import com.equationl.githubapp.ui.common.BaseAction
 import com.equationl.githubapp.ui.common.BaseEvent
+import com.equationl.githubapp.ui.common.CheckBoxGroup
 import com.equationl.githubapp.ui.common.TopBar
-import com.equationl.githubapp.ui.view.list.generalRepo.GeneralRepoListRefreshContent
-import com.equationl.githubapp.ui.view.list.generalUser.UserListRefreshContent
+import com.equationl.githubapp.ui.view.list.generalRepo.GeneralRepoListContent
+import com.equationl.githubapp.ui.view.list.generalUser.UserListContent
 import com.vanpra.composematerialdialogs.MaterialDialog
 import com.vanpra.composematerialdialogs.MaterialDialogState
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
@@ -116,25 +115,29 @@ fun SearchScreen(
                 defaultOrder = viewState.orderFilter.ordinal,
                 defaultLanguage = viewState.languageFilter.ordinal
             ) { type: Int, order: Int, language: Int ->
-                Log.i("el", "SearchScreen: type = $type, order = $order, language = $language")
                 viewModel.dispatch(SearchAction.OnUpdateFilter(TypeFilter.values()[type], OrderFilter.values()[order], LanguageFilter.values()[language]))
             }
         }
     }
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SearchContent(
     viewModel: SearchViewModel,
     navHostController: NavHostController
 ) {
     val viewState = viewModel.viewStates
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     Column {
         SearchHeader(
             currentTab = viewState.currentTab,
             onChangeTab = { viewModel.dispatch(SearchAction.OnChangeTab(it)) },
-            onSearch = { viewModel.dispatch(SearchAction.OnSearch(it)) }
+            onSearch = {
+                keyboardController?.hide()
+                viewModel.dispatch(SearchAction.OnSearch(it))
+            }
         )
 
         when (viewState.currentTab) {
@@ -142,7 +145,7 @@ fun SearchContent(
                 @Suppress("UNCHECKED_CAST")
                 val repoPagingItems = viewState.resultListFlow?.collectAsLazyPagingItems() as LazyPagingItems<ReposUIModel>?
 
-                GeneralRepoListRefreshContent(
+                GeneralRepoListContent(
                     navHostController = navHostController,
                     repoPagingItems = repoPagingItems,
                     onLoadError = {
@@ -157,7 +160,7 @@ fun SearchContent(
                 @Suppress("UNCHECKED_CAST")
                 val userPagingItems = viewState.resultListFlow?.collectAsLazyPagingItems() as LazyPagingItems<UserUIModel>?
 
-                UserListRefreshContent(
+                UserListContent(
                     userPagingItems = userPagingItems,
                     onLoadError = {
                         viewModel.dispatch(BaseAction.ShowMag(it))
@@ -325,34 +328,6 @@ private fun SearchHeader(
                         color = if (currentTab == SearchTab.User) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
                     )
                 }
-            }
-        }
-    }
-}
-
-@Composable
-fun CheckBoxGroup(
-    options: List<String>,
-    defaultCheck: Int,
-    onCheckChange: (index: Int) -> Unit,
-) {
-    var checkIndex by remember { mutableStateOf(defaultCheck) }
-    // checkIndex = defaultCheck
-
-    Column {
-        options.forEachIndexed { index, s ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(if (checkIndex == index) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.background)
-                    .clickable {
-                        checkIndex = index
-                        onCheckChange(index)
-                    }
-            ) {
-                Checkbox(checked = checkIndex == index, onCheckedChange = {})
-                Text(text = s, color = if (checkIndex == index) MaterialTheme.colorScheme.onSecondary else Color.Unspecified)
             }
         }
     }

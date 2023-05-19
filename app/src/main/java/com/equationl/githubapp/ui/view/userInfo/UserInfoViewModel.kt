@@ -79,10 +79,10 @@ class UserInfoViewModel @Inject constructor(
                     _viewEvents.trySend(BaseEvent.ShowMsg("更新失败： 返回为空"))
                 }
                 else {
-                    CommonUtils.updateStar(user, repoService) // 更新start数量
-                    DataStoreUtils.saveStringData(DataKey.UserInfo, user.toJson())
+                    val newUser = CommonUtils.updateStar(user, repoService) // 更新start数量
+                    DataStoreUtils.saveStringData(DataKey.UserInfo, newUser.toJson())
 
-                    viewStates = viewStates.copy(userInfo = user)
+                    viewStates = viewStates.copy(userInfo = newUser)
 
                     _viewEvents.trySend(BaseEvent.ShowMsg("已更新"))
 

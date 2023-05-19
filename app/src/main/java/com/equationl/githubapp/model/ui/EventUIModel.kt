@@ -1,5 +1,7 @@
 package com.equationl.githubapp.model.ui
 
+import com.equationl.githubapp.model.BaseUIModel
+
 /**
  * 事件相关UI实体
  */
@@ -17,8 +19,8 @@ data class EventUIModel(
     var releaseUrl: String = "",
     var pushSha: ArrayList<String> = arrayListOf(),
     var pushShaDes: ArrayList<String> = arrayListOf(),
-    var threadId: String = ""
-)
+    var threadId: String = "",
+): BaseUIModel()
 
 /**
  * 事件相关UI类型

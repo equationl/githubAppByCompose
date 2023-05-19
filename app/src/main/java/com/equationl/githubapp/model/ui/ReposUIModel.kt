@@ -1,12 +1,12 @@
 package com.equationl.githubapp.model.ui
 
-import java.util.UUID
+import com.equationl.githubapp.model.BaseUIModel
 
 
 /**
  * 仓库相关UI类型
  */
-class ReposUIModel {
+class ReposUIModel: BaseUIModel() {
 
     var ownerName: String = "--"
 
@@ -33,7 +33,4 @@ class ReposUIModel {
     var repositoryAction: String = "--"
 
     var repositoryIssue: String = "--"
-
-    /**仅用于 LazyColumn 的key*/
-    var lazyColumnKey: String = UUID.randomUUID().toString()
 }

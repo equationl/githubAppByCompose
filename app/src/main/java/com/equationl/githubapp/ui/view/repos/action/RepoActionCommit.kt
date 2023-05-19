@@ -1,7 +1,6 @@
 package com.equationl.githubapp.ui.view.repos.action
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -10,15 +9,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemsIndexed
 import com.equationl.githubapp.common.route.Route
 import com.equationl.githubapp.model.ui.CommitUIModel
-import com.equationl.githubapp.ui.common.EmptyItem
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import com.equationl.githubapp.ui.common.BaseRefreshPaging
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,77 +67,27 @@ private fun RefreshContent(
     headerItem: (LazyListScope.() -> Unit)? = null,
     onRefresh: (() -> Unit)? = null
 ) {
-    val rememberSwipeRefreshState = rememberSwipeRefreshState(isRefreshing = false)
-
-    if (commitPagingItems.loadState.refresh is LoadState.Error) {
-        onLoadError("加载失败！")
-    }
-
-    rememberSwipeRefreshState.isRefreshing = (commitPagingItems.loadState.refresh is LoadState.Loading)
-
-    SwipeRefresh(
-        state = rememberSwipeRefreshState,
-        onRefresh = {
-            commitPagingItems.refresh()
+    BaseRefreshPaging(
+        pagingItems = commitPagingItems,
+        itemUi = {
+            Column(modifier = Modifier.padding(8.dp)) {
+                DynamicColumnItem(
+                    it
+                ) {
+                    onClickItem(it)
+                }
+            }
         },
-        modifier = Modifier.fillMaxSize()
-    ) {
-        CommitLazyColumn(
-            commitPagingItems,
-            onClickItem,
-            headerItem = headerItem
-        )
-    }
-
-    if (rememberSwipeRefreshState.isRefreshing) {
-        onRefresh?.invoke()
-    }
-
-}
-
-@Composable
-private fun CommitLazyColumn(
-    commitPagingItems: LazyPagingItems<CommitUIModel>,
-    onClickItem: (eventUiModel: CommitUIModel) -> Unit,
-    headerItem: (LazyListScope.() -> Unit)? = null,
-) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(bottom = 2.dp)
-    ) {
-        headerItem?.let { it() }
-
-        itemsIndexed(commitPagingItems, key = { _, item -> item.sha}) { _, item ->
-            if (item != null) {
-                Column(modifier = Modifier.padding(8.dp)) {
-                    DynamicColumnItem(
-                        item
-                    ) {
-                        onClickItem(item)
-                    }
-                }
-            }
-        }
-
-        if (commitPagingItems.itemCount < 1) {
-            if (commitPagingItems.loadState.refresh == LoadState.Loading) {
-                item {
-                    Text(text = "加载中……")
-                }
-            }
-            else {
-                item {
-                    EmptyItem()
-                }
-            }
-        }
-    }
+        onLoadError = onLoadError,
+        onClickItem = {},
+        headerItem = headerItem,
+        onRefresh = onRefresh
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DynamicColumnItem(
+private fun DynamicColumnItem(
     commitUIModel: CommitUIModel,
     onClick: () -> Unit
 ) {

@@ -98,6 +98,7 @@ class NotifyViewModel @Inject constructor(
                 }
             }
             EventUIAction.Release -> {
+                // TODO
                 _viewEvents.trySend(BaseEvent.ShowMsg("Click A Release Item!"))
             }
         }

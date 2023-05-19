@@ -82,8 +82,8 @@ class LoginOauthViewModel @Inject constructor(
             }
             else {
                 // 获取 star 信息后保存
-                CommonUtils.updateStar(user, repoService)
-                DataStoreUtils.saveSyncStringData(DataKey.UserInfo, user.toJson())
+                val newUser = CommonUtils.updateStar(user, repoService)
+                DataStoreUtils.saveSyncStringData(DataKey.UserInfo, newUser.toJson())
             }
         }
         else {

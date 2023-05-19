@@ -4,6 +4,7 @@ import android.webkit.CookieManager
 import android.webkit.WebStorage
 import androidx.compose.ui.graphics.Color
 import com.equationl.githubapp.common.config.AppConfig
+import com.equationl.githubapp.common.constant.LocalCache
 import com.equationl.githubapp.common.net.PageInfo
 import com.equationl.githubapp.model.bean.User
 import com.equationl.githubapp.service.RepoService
@@ -12,6 +13,7 @@ import com.equationl.githubapp.util.fromJson
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.roundToInt
 
 
 /**
@@ -49,10 +51,10 @@ object CommonUtils {
         val subTime = Date().time - date.time
         return when {
             subTime < MILLIS_LIMIT -> "刚刚"
-            subTime < SECONDS_LIMIT -> Math.round(subTime / MILLIS_LIMIT).toString() + " " + "秒前"
-            subTime < MINUTES_LIMIT -> Math.round(subTime / SECONDS_LIMIT).toString() + " " + "分钟前"
-            subTime < HOURS_LIMIT -> Math.round(subTime / MINUTES_LIMIT).toString() + " " + "小时前"
-            subTime < DAYS_LIMIT -> Math.round(subTime / HOURS_LIMIT).toString() + " " + "天前"
+            subTime < SECONDS_LIMIT -> (subTime / MILLIS_LIMIT).roundToInt().toString() + " " + "秒前"
+            subTime < MINUTES_LIMIT -> (subTime / SECONDS_LIMIT).roundToInt().toString() + " " + "分钟前"
+            subTime < HOURS_LIMIT -> (subTime / MINUTES_LIMIT).roundToInt().toString() + " " + "小时前"
+            subTime < DAYS_LIMIT -> (subTime / HOURS_LIMIT).roundToInt().toString() + " " + "天前"
             else -> getDateStr(date)
         }
     }
@@ -95,22 +97,26 @@ object CommonUtils {
     /**
      *  获取用户的 star 数量，并更新到 user 中
      * */
-    suspend fun updateStar(user: User, repoService: RepoService, ) {
+    suspend fun updateStar(user: User, repoService: RepoService): User {
+        val newUser = user.copy()
         val startResponse = repoService.getStarredRepos(true, user.login ?: "", 1, "updated", 1)
         val honorResponse = repoService.getUserRepository100StatusDao(true, user.login ?: "", 1)
         val starCount = startResponse.headers()["page_info"]?.fromJson<PageInfo>()?.last ?: -1
         if (starCount != -1) {
-            user.starRepos = starCount
+            newUser.starRepos = starCount
         }
 
         if (honorResponse.isSuccessful) {
             val list = honorResponse.body()
+            LocalCache.UserHonorCacheList = list
             var count = 0
             list?.forEach {
                 count += it.watchersCount
             }
-            user.honorRepos = count
+            newUser.honorRepos = count
         }
+
+        return newUser
     }
 
     fun clearCookies() {

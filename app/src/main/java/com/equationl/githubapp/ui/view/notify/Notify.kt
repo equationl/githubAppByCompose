@@ -30,8 +30,8 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.equationl.githubapp.model.ui.EventUIModel
 import com.equationl.githubapp.ui.common.BaseAction
 import com.equationl.githubapp.ui.common.BaseEvent
+import com.equationl.githubapp.ui.common.EventChoosePushDialog
 import com.equationl.githubapp.ui.common.TopBar
-import com.equationl.githubapp.ui.view.dynamic.EventChoosePushDialog
 import com.equationl.githubapp.ui.view.dynamic.EventRefreshContent
 
 @OptIn(ExperimentalMaterial3Api::class)

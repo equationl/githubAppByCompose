@@ -99,7 +99,7 @@ fun ReposActionContent(
 }
 
 @Composable
-fun ReposActionHeader(
+private fun ReposActionHeader(
     reposUIModel: ReposUIModel,
     currentTab: RepoActionTab,
     navController: NavHostController,

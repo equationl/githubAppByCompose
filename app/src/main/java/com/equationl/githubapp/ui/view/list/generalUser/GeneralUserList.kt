@@ -2,10 +2,8 @@ package com.equationl.githubapp.ui.view.list.generalUser
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
@@ -28,20 +26,16 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemsIndexed
 import com.equationl.githubapp.common.route.Route
 import com.equationl.githubapp.model.ui.UserUIModel
 import com.equationl.githubapp.ui.common.AvatarContent
 import com.equationl.githubapp.ui.common.BaseAction
 import com.equationl.githubapp.ui.common.BaseEvent
-import com.equationl.githubapp.ui.common.EmptyItem
+import com.equationl.githubapp.ui.common.BaseRefreshPaging
 import com.equationl.githubapp.ui.common.TopBar
 import com.equationl.githubapp.ui.view.list.GeneralListEnum
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -97,7 +91,7 @@ fun GeneralUserListScreen(
 
         Column(modifier = Modifier.padding(it)) {
             UserListContent(
-                repoPagingItems = userList,
+                userPagingItems = userList,
                 onLoadError = { msg ->
                     viewModel.dispatch(BaseAction.ShowMag(msg))
                 },
@@ -110,93 +104,25 @@ fun GeneralUserListScreen(
 }
 
 @Composable
-private fun UserListContent(
-    repoPagingItems: LazyPagingItems<UserUIModel>?,
-    onLoadError: (msg: String) -> Unit,
-    onClickItem: (userUiModel: UserUIModel) -> Unit,
-    headerItem: (LazyListScope.() -> Unit)? = null,
-    onRefresh: (() -> Unit)? = null
-) {
-    UserListRefreshContent(
-        repoPagingItems, onLoadError, onClickItem, headerItem, onRefresh
-    )
-}
-
-@Composable
-fun UserListRefreshContent(
+fun UserListContent(
     userPagingItems: LazyPagingItems<UserUIModel>?,
     onLoadError: (msg: String) -> Unit,
     onClickItem: (userUiModel: UserUIModel) -> Unit,
     headerItem: (LazyListScope.() -> Unit)? = null,
     onRefresh: (() -> Unit)? = null
 ) {
-    val rememberSwipeRefreshState = rememberSwipeRefreshState(isRefreshing = false)
-
-    if (userPagingItems?.loadState?.refresh is LoadState.Error) {
-        onLoadError("加载失败！")
-    }
-
-    rememberSwipeRefreshState.isRefreshing = (userPagingItems?.loadState?.refresh is LoadState.Loading)
-
-    SwipeRefresh(
-        state = rememberSwipeRefreshState,
-        onRefresh = {
-            userPagingItems?.refresh()
-            onRefresh?.invoke()
+    BaseRefreshPaging(
+        pagingItems = userPagingItems,
+        itemUi = { userUIModel ->
+            UserItem(userUiModel = userUIModel) {
+                onClickItem(it)
+            }
         },
-        modifier = Modifier.fillMaxSize()
-    ) {
-        UserListLazyColumn(
-            userPagingItems,
-            onClickItem,
-            headerItem = headerItem
-        )
-    }
-}
-
-@Composable
-private fun UserListLazyColumn(
-    repoPagingItems: LazyPagingItems<UserUIModel>?,
-    onClickItem: (userUiModel: UserUIModel) -> Unit,
-    headerItem: (LazyListScope.() -> Unit)? = null,
-) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(bottom = 2.dp)
-    ) {
-        headerItem?.let { it() }
-
-        if (repoPagingItems == null) {
-            item {
-                EmptyItem(true)
-            }
-        }
-        else {
-            itemsIndexed(repoPagingItems, key = { _, item -> item.lazyColumnKey}) { _, item ->
-                if (item != null) {
-                    Column(modifier = Modifier.padding(8.dp)) {
-                        UserItem(userUiModel = item) {
-                            onClickItem(item)
-                        }
-                    }
-                }
-            }
-
-            if (repoPagingItems.itemCount < 1) {
-                if (repoPagingItems.loadState.refresh == LoadState.Loading) {
-                    item {
-                        Text(text = "加载中……")
-                    }
-                }
-                else {
-                    item {
-                        EmptyItem()
-                    }
-                }
-            }
-        }
-    }
+        onLoadError = onLoadError,
+        onClickItem = {},
+        onRefresh = onRefresh,
+        headerItem = headerItem
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

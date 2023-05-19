@@ -11,11 +11,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Comment
-import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.MoreHoriz
 import androidx.compose.material3.Card
 import androidx.compose.material3.Divider
@@ -45,18 +42,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemsIndexed
-import com.equationl.githubapp.common.route.Route
 import com.equationl.githubapp.common.utlis.copy
 import com.equationl.githubapp.model.ui.IssueUIModel
 import com.equationl.githubapp.ui.common.AvatarContent
+import com.equationl.githubapp.ui.common.BaseRefreshPaging
 import com.equationl.githubapp.ui.common.MoreMenu
 import com.equationl.githubapp.ui.common.TopBar
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.halilibo.richtext.markdown.Markdown
 import com.halilibo.richtext.ui.material.MaterialRichText
 import com.vanpra.composematerialdialogs.MaterialDialog
@@ -107,13 +100,6 @@ fun IssueDetailScreen(
             TopBar(
                 title = viewState.issueInfo.action,
                 actions = {
-                    IconButton(onClick = {
-                        //navController.navigate("${Route.REPO_DETAIL}/$repoName/$userName")
-                        navController.popBackStack("${Route.REPO_DETAIL}/$repoName/$userName", false)
-                    }) {
-                        Icon(Icons.Outlined.Home, "Home")
-                    }
-
                     MoreMenu(
                         isShow = isShowDropMenu,
                         onDismissRequest = { isShowDropMenu = false },
@@ -350,104 +336,35 @@ private fun IssueContent(
     onError: (msg: String) -> Unit,
     onClickComment: (issueUIModel: IssueUIModel) -> Unit
 ) {
-    if (commentList == null) {
-        Text(text = "need init...")
-    }
-    else {
-        CommentRefreshContent(
-            commentPagingItems = commentList,
-            navController = navController,
-            onLoadError = {
-                onError(it)
-            },
-            onClickComment = onClickComment,
-            headerItem = {
-                item(key = "Header") {
-                    Header(issueUIModel = issueInfo, navController = navController)
-                }
-            }
-        )
-    }
-}
-
-@Composable
-private fun CommentRefreshContent(
-    commentPagingItems: LazyPagingItems<IssueUIModel>,
-    navController: NavHostController,
-    onLoadError: (msg: String) -> Unit,
-    onClickComment: (issueUIModel: IssueUIModel) -> Unit,
-    headerItem: (LazyListScope.() -> Unit)? = null,
-    onRefresh: (() -> Unit)? = null
-) {
-    val rememberSwipeRefreshState = rememberSwipeRefreshState(isRefreshing = false)
-
-    if (commentPagingItems.loadState.refresh is LoadState.Error) {
-        onLoadError("加载失败！")
-    }
-
-    if (commentPagingItems.itemCount < 1 && commentPagingItems.loadState.refresh == LoadState.Loading) {
-        Text(text = "正在加载中…")
-    }
-    else {
-        rememberSwipeRefreshState.isRefreshing = (commentPagingItems.loadState.refresh is LoadState.Loading)
-
-        SwipeRefresh(
-            state = rememberSwipeRefreshState,
-            onRefresh = {
-                commentPagingItems.refresh()
-                onRefresh?.invoke()
-            },
-            modifier = Modifier.fillMaxSize()
-        ) {
-            IssueLazyColumn(
-                commentPagingItems,
-                navController,
-                onClickComment,
-                headerItem = headerItem
-            )
-        }
-    }
-}
-
-@Composable
-private fun IssueLazyColumn(
-    commentPagingItems: LazyPagingItems<IssueUIModel>,
-    navController: NavHostController,
-    onClickComment: (eventUiModel: IssueUIModel) -> Unit,
-    headerItem: (LazyListScope.() -> Unit)? = null,
-) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(bottom = 2.dp)
-    ) {
-        headerItem?.let { it() }
-
-        itemsIndexed(commentPagingItems, key = { _, item -> item.lazyColumnKey}) { _, item ->
-            if (item != null) {
-                Column(modifier = Modifier.padding(8.dp)) {
-                    CommentItem(
-                        item,
-                        navController
-                    ) {
-                        onClickComment(item)
-                    }
-                }
-            }
-        }
-
-        if (commentPagingItems.itemCount < 1) {
-            item {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
+    BaseRefreshPaging(
+        pagingItems = commentList,
+        itemUi = {
+            Column(modifier = Modifier.padding(8.dp)) {
+                CommentItem(
+                    it,
+                    navController
                 ) {
-                    Text(text = "没有回复哦")
+                    onClickComment(it)
                 }
             }
+        },
+        onLoadError = onError,
+        onClickItem = {},
+        headerItem = {
+            item(key = "Header") {
+                Header(issueUIModel = issueInfo, navController = navController)
+            }
+        },
+        emptyItem = {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(text = "没有回复哦")
+            }
         }
-    }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

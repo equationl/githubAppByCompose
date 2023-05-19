@@ -15,6 +15,7 @@ object Route {
     const val PERSON_DETAIL = "personDetail"
     const val IMAGE_PREVIEW = "imagePreview"
     const val NOTIFY = "notify"
+    const val WELCOME = "welcome"
 }
 
 object RouteParams {

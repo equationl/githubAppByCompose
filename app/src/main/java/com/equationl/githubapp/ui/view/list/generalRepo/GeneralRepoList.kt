@@ -1,9 +1,7 @@
 package com.equationl.githubapp.ui.view.list.generalRepo
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Sort
@@ -27,21 +25,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemsIndexed
+import com.equationl.githubapp.common.constant.LocalCache
 import com.equationl.githubapp.common.route.Route
 import com.equationl.githubapp.model.ui.ReposUIModel
 import com.equationl.githubapp.ui.common.BaseAction
 import com.equationl.githubapp.ui.common.BaseEvent
-import com.equationl.githubapp.ui.common.EmptyItem
+import com.equationl.githubapp.ui.common.BaseRefreshPaging
+import com.equationl.githubapp.ui.common.RepoItem
 import com.equationl.githubapp.ui.common.TopBar
 import com.equationl.githubapp.ui.view.list.GeneralListEnum
 import com.equationl.githubapp.ui.view.list.GeneralRepoListSort
-import com.equationl.githubapp.ui.view.recommend.RepoItem
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,6 +72,7 @@ fun GeneralRepoListScreen(
                     GeneralListEnum.UserRepository -> "仓库"
                     GeneralListEnum.UserStar -> "星标"
                     GeneralListEnum.RepositoryForkUser -> "Fork"
+                    GeneralListEnum.UserHonor -> "荣耀"
                     else -> "Null"
                 }
             }
@@ -127,6 +123,10 @@ fun GeneralRepoListScreen(
                 },
                 onClickItem = { repoUiModel ->
                     navHostController.navigate("${Route.REPO_DETAIL}/${repoUiModel.repositoryName}/${repoUiModel.ownerName}")
+                },
+                onRefresh = {
+                    // 清除缓存
+                    LocalCache.UserHonorCacheList = null
                 }
             )
         }
@@ -134,7 +134,7 @@ fun GeneralRepoListScreen(
 }
 
 @Composable
-private fun GeneralRepoListContent(
+fun GeneralRepoListContent(
     navHostController: NavHostController,
     repoPagingItems: LazyPagingItems<ReposUIModel>?,
     onLoadError: (msg: String) -> Unit,
@@ -142,89 +142,18 @@ private fun GeneralRepoListContent(
     headerItem: (LazyListScope.() -> Unit)? = null,
     onRefresh: (() -> Unit)? = null
 ) {
-    GeneralRepoListRefreshContent(
-        navHostController, repoPagingItems, onLoadError, onClickItem, headerItem, onRefresh
-    )
-}
-
-@Composable
-fun GeneralRepoListRefreshContent(
-    navHostController: NavHostController,
-    repoPagingItems: LazyPagingItems<ReposUIModel>?,
-    onLoadError: (msg: String) -> Unit,
-    onClickItem: (eventUiModel: ReposUIModel) -> Unit,
-    headerItem: (LazyListScope.() -> Unit)? = null,
-    onRefresh: (() -> Unit)? = null
-) {
-    val rememberSwipeRefreshState = rememberSwipeRefreshState(isRefreshing = false)
-
-    if (repoPagingItems?.loadState?.refresh is LoadState.Error) {
-        onLoadError("加载失败！")
-    }
-
-    rememberSwipeRefreshState.isRefreshing = (repoPagingItems?.loadState?.refresh is LoadState.Loading)
-
-    SwipeRefresh(
-        state = rememberSwipeRefreshState,
-        onRefresh = {
-            repoPagingItems?.refresh()
-            onRefresh?.invoke()
+    BaseRefreshPaging(
+        pagingItems = repoPagingItems,
+        itemUi = {
+            RepoItem(it, navHostController) {
+                onClickItem(it)
+            }
         },
-        modifier = Modifier.fillMaxSize()
-    ) {
-        GeneralRepoListLazyColumn(
-            navHostController,
-            repoPagingItems,
-            onClickItem,
-            headerItem = headerItem
-        )
-    }
-}
-
-@Composable
-private fun GeneralRepoListLazyColumn(
-    navHostController: NavHostController,
-    repoPagingItems: LazyPagingItems<ReposUIModel>?,
-    onClickItem: (eventUiModel: ReposUIModel) -> Unit,
-    headerItem: (LazyListScope.() -> Unit)? = null,
-) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(bottom = 2.dp)
-    ) {
-        headerItem?.let { it() }
-
-        if (repoPagingItems == null) {
-            item {
-                EmptyItem(true)
-            }
-        }
-        else {
-            itemsIndexed(repoPagingItems, key = { _, item -> item.lazyColumnKey}) { _, item ->
-                if (item != null) {
-                    Column(modifier = Modifier.padding(8.dp)) {
-                        RepoItem(data = item, navController = navHostController) {
-                            onClickItem(item)
-                        }
-                    }
-                }
-            }
-
-            if (repoPagingItems.itemCount < 1) {
-                if (repoPagingItems.loadState.refresh == LoadState.Loading) {
-                    item {
-                        Text(text = "加载中……")
-                    }
-                }
-                else {
-                    item {
-                        EmptyItem()
-                    }
-                }
-            }
-        }
-    }
+        onLoadError = onLoadError,
+        onClickItem = {},
+        headerItem = headerItem,
+        onRefresh = onRefresh
+    )
 }
 
 @Composable

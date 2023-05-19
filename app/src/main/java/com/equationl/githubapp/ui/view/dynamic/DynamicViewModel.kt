@@ -25,8 +25,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import javax.inject.Inject
 
-private const val TAG = "el, DVM"
-
 @HiltViewModel
 open class DynamicViewModel @Inject constructor(
     private val userService: UserService,
@@ -101,6 +99,7 @@ open class DynamicViewModel @Inject constructor(
                 }*/
             }
             EventUIAction.Release -> {
+                // TODO
                 _viewEvents.trySend(DynamicViewEvent.ShowMsg("Click A Release Item!"))
             }
         }

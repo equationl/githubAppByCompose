@@ -24,6 +24,7 @@ import com.equationl.githubapp.ui.view.push.PushDetailScreen
 import com.equationl.githubapp.ui.view.repos.RepoDetailScreen
 import com.equationl.githubapp.ui.view.search.SearchScreen
 import com.equationl.githubapp.ui.view.userInfo.UserInfoScreen
+import com.equationl.githubapp.ui.view.welcome.WelcomeScreen
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
@@ -34,7 +35,13 @@ fun HomeNavHost(
     onFinish: () -> Unit
 ) {
     val navController = rememberAnimatedNavController()
-    AnimatedNavHost(navController, Route.LOGIN) {
+    AnimatedNavHost(navController, Route.WELCOME) {
+
+        composable(Route.WELCOME) {
+            Column(Modifier.systemBarsPadding()) {
+                WelcomeScreen(navHostController = navController)
+            }
+        }
 
         // 登录
         composable(Route.LOGIN) {

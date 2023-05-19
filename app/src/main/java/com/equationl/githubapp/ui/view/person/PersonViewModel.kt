@@ -14,6 +14,10 @@ import com.equationl.githubapp.service.RepoService
 import com.equationl.githubapp.service.UserService
 import com.equationl.githubapp.ui.view.dynamic.DynamicViewEvent
 import com.equationl.githubapp.ui.view.dynamic.DynamicViewModel
+import com.equationl.githubapp.util.datastore.DataKey
+import com.equationl.githubapp.util.datastore.DataStoreUtils
+import com.equationl.githubapp.util.fromJson
+import com.equationl.githubapp.util.toJson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -32,6 +36,7 @@ class PersonViewModel @Inject constructor(
         when (action) {
             is PersonAction.GetUser -> getUser(action.user)
             is PersonAction.ClickMoreMenu -> clickMoreMenu(action.context, action.pos, action.user)
+            is PersonAction.ChangeFollowState -> changeFollowState()
         }
     }
 
@@ -52,16 +57,35 @@ class PersonViewModel @Inject constructor(
     }
 
     private fun getUser(user: String) {
-        // TODO 没有判断打开的是组织还是用户
-        // TODO 没有检查是否关注 checkFocus
-        // TODO 没有根据用户名判断是否是当前登录用户
         viewModelScope.launch {
+            val saveUserInfo: User? = DataStoreUtils.getSyncData(DataKey.UserInfo, "").fromJson()
+
             personViewState = personViewState.copy(user = User())
-            val response = userService.getUser(true, user)
+
+            val isLoginUser = saveUserInfo?.login == user // 是否是当前登录用户
+
+            val response = if (isLoginUser) userService.getPersonInfo(true) else userService.getUser(true, user)
             if (response.isSuccessful) {
                 response.body()?.let {
-                    CommonUtils.updateStar(it, repoService)
-                    personViewState = personViewState.copy(user = it)
+                    personViewState = personViewState.copy(user = it) // 先刷新UI
+
+                    // 获取 follow 状态
+                    personViewState = if (!isLoginUser) {
+                        if (userService.checkFollowing(user).isSuccessful) { // 已 follow
+                            personViewState.copy(isFollow = IsFollow.Followed)
+                        } else { // 未 follow
+                            personViewState.copy(isFollow = IsFollow.Unfollow)
+                        }
+                    } else { // 就是自己
+                        personViewState.copy(isFollow = IsFollow.NotNeed)
+                    }
+
+                    // 获取 Star 等额外数据
+                    val newUser = CommonUtils.updateStar(it, repoService)
+                    if (isLoginUser) { // 登录用户则保存一下
+                        DataStoreUtils.saveSyncStringData(DataKey.UserInfo, newUser.toJson())
+                    }
+                    personViewState = personViewState.copy(user = newUser)
                 }
             }
             else {
@@ -70,13 +94,39 @@ class PersonViewModel @Inject constructor(
             }
         }
     }
+
+    private fun changeFollowState() {
+        viewModelScope.launch {
+            val isFollow = personViewState.isFollow != IsFollow.Followed
+
+            val response = if (isFollow) userService.followUser(personViewState.user.login ?: "") else userService.unfollowUser(personViewState.user.login ?: "")
+
+            val text = if (isFollow) "关注" else "取关"
+
+            if (response.isSuccessful) {
+                personViewState = personViewState.copy(isFollow = if (isFollow) IsFollow.Followed else IsFollow.Unfollow)
+                _viewEvents.trySend(DynamicViewEvent.ShowMsg("$text 成功"))
+            }
+            else {
+                _viewEvents.trySend(DynamicViewEvent.ShowMsg("$text 失败, ${response.code()}"))
+            }
+        }
+    }
 }
 
 data class PersonViewState(
-    val user: User
+    val user: User,
+    val isFollow: IsFollow = IsFollow.NotNeed
 )
 
 sealed class PersonAction {
     data class GetUser(val user: String) : PersonAction()
     data class ClickMoreMenu(val context: Context, val pos: Int, val user: String): PersonAction()
+    object ChangeFollowState: PersonAction()
+}
+
+enum class IsFollow {
+    NotNeed,
+    Followed,
+    Unfollow
 }

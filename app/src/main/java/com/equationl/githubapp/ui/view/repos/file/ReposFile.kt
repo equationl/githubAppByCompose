@@ -6,9 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.BottomSheetScaffoldState
@@ -22,9 +20,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.equationl.githubapp.model.ui.FileUIModel
 import com.equationl.githubapp.ui.common.BaseEvent
+import com.equationl.githubapp.ui.common.BaseRefresh
 import com.equationl.githubapp.ui.common.FileItem
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -94,34 +91,15 @@ private fun RefreshContent(
     onClickFileItem: (fileUiModel: FileUIModel) -> Unit,
     onRefresh: () -> Unit
 ) {
-    val rememberSwipeRefreshState = rememberSwipeRefreshState(isRefreshing = false)
-
-    rememberSwipeRefreshState.isRefreshing = isRefresh
-
-    SwipeRefresh(
-        state = rememberSwipeRefreshState,
-        onRefresh = onRefresh,
-        modifier = Modifier.fillMaxSize()
-    ) {
-        FileLazyColumn(fileList = fileList, onClickFileItem = onClickFileItem)
-    }
-}
-
-@Composable
-private fun FileLazyColumn(
-    fileList: List<FileUIModel>,
-    onClickFileItem: (fileUiModel: FileUIModel) -> Unit
-) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        items(
-            items = fileList,
-            key = { item -> "${item.dir}${item.title}${item.sha}" }
-        ) {
+    BaseRefresh(
+        isRefresh = isRefresh,
+        itemList = fileList,
+        itemUi = {
             FileItem(fileUiModel = it, onClickFileItem)
-        }
-    }
+        },
+        onRefresh = onRefresh,
+        onClickItem = {}
+    )
 }
 
 @Composable

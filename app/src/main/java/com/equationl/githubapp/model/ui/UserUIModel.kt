@@ -1,9 +1,9 @@
 package com.equationl.githubapp.model.ui
 
+import com.equationl.githubapp.model.BaseUIModel
 import java.util.Date
-import java.util.UUID
 
-class UserUIModel {
+class UserUIModel: BaseUIModel() {
     var login: String? = null
 
 
@@ -56,7 +56,4 @@ class UserUIModel {
     var updatedAt: Date? = null
 
     var actionUrl: String = ""
-
-    // 仅用于 lazyColumn key
-    val lazyColumnKey: String = UUID.randomUUID().toString()
 }

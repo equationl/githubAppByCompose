@@ -37,6 +37,9 @@ class UserPagingSource(
                     GeneralListEnum.RepositoryWatchUser -> {
                         repoServer.getWatchers(true, userName, repoName, nextPageNumber)
                     }
+                    GeneralListEnum.OrgMembers -> {
+                        userService.getOrgMembers(true, userName, nextPageNumber)
+                    }
                     else -> {
                         userService.getFollowers(true, userName, nextPageNumber)
                     }

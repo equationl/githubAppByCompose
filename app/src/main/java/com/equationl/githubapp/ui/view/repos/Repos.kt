@@ -165,7 +165,7 @@ fun RepoDetailScreen(
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun MainContent(
+private fun MainContent(
     pagerState: PagerState,
     navController: NavHostController,
     scaffoldState: BottomSheetScaffoldState,

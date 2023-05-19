@@ -2,7 +2,6 @@ package com.equationl.githubapp.ui.view.repos.issue
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Comment
@@ -18,15 +17,12 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemsIndexed
 import com.equationl.githubapp.model.ui.IssueUIModel
 import com.equationl.githubapp.ui.common.AvatarContent
+import com.equationl.githubapp.ui.common.BaseRefreshPaging
 import com.equationl.githubapp.ui.common.VerticalIconText
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,68 +82,22 @@ private fun RefreshContent(
     headerItem: (LazyListScope.() -> Unit)? = null,
     onRefresh: (() -> Unit)? = null
 ) {
-    val rememberSwipeRefreshState = rememberSwipeRefreshState(isRefreshing = false)
-
-    if (pagingItems.loadState.refresh is LoadState.Error) {
-        onLoadError("加载失败！")
-    }
-
-    if (pagingItems.itemCount < 1) {
-        if (pagingItems.loadState.refresh == LoadState.Loading) {
-            Text(text = "正在加载中…")
-        }
-    }
-    else {
-        rememberSwipeRefreshState.isRefreshing = (pagingItems.loadState.refresh is LoadState.Loading)
-
-        SwipeRefresh(
-            state = rememberSwipeRefreshState,
-            onRefresh = {
-                pagingItems.refresh()
-            },
-            modifier = Modifier.fillMaxSize()
-        ) {
-            DynamicLazyColumn(
-                pagingItems,
-                navController,
-                onClickItem,
-                headerItem = headerItem
-            )
-        }
-    }
-
-    if (rememberSwipeRefreshState.isRefreshing) {
-        onRefresh?.invoke()
-    }
-
-}
-
-@Composable
-private fun DynamicLazyColumn(
-    pagingItems: LazyPagingItems<IssueUIModel>,
-    navController: NavHostController,
-    onClickItem: (eventUiModel: IssueUIModel) -> Unit,
-    headerItem: (LazyListScope.() -> Unit)? = null,
-) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(bottom = 2.dp)
-    ) {
-        headerItem?.let { it() }
-
-        itemsIndexed(pagingItems, key = { _, item -> item.issueNum}) { _, item ->
-            if (item != null) {
-                Column(modifier = Modifier.padding(8.dp)) {
-                    ReposIssueItem(
-                        item, navController
-                    ) {
-                        onClickItem(item)
-                    }
+    BaseRefreshPaging(
+        pagingItems = pagingItems,
+        itemUi = {
+            Column(modifier = Modifier.padding(8.dp)) {
+                ReposIssueItem(
+                    it, navController
+                ) {
+                    onClickItem(it)
                 }
             }
-        }
-    }
+        },
+        onLoadError = onLoadError,
+        onClickItem = {},
+        headerItem = headerItem,
+        onRefresh = onRefresh
+    )
 }
 
 @Composable
@@ -162,8 +112,12 @@ private fun ReposIssueHeader(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
-            OutlinedTextField(value = searchValue, onValueChange = { searchValue = it }, modifier = Modifier.fillMaxWidth().weight(0.9f) )
-            IconButton(onClick = { onSearch(searchValue) }, modifier = Modifier.fillMaxWidth().weight(0.1f)) {
+            OutlinedTextField(value = searchValue, onValueChange = { searchValue = it }, modifier = Modifier
+                .fillMaxWidth()
+                .weight(0.9f) )
+            IconButton(onClick = { onSearch(searchValue) }, modifier = Modifier
+                .fillMaxWidth()
+                .weight(0.1f)) {
                 Icon(imageVector = Icons.Filled.Search, contentDescription = null)
             }
         }

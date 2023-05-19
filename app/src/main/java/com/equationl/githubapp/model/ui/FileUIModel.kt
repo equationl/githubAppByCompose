@@ -3,6 +3,7 @@ package com.equationl.githubapp.model.ui
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Circle
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.equationl.githubapp.model.BaseUIModel
 
 
 /**
@@ -16,4 +17,4 @@ data class FileUIModel(
     var dir: String = "",
     var patch: String = "",
     var sha: String = ""
-)
+): BaseUIModel()

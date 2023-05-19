@@ -4,12 +4,10 @@ import android.util.Log
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -56,13 +54,16 @@ fun OAuthLoginScreen(
         }
     ) {
         Column(modifier = Modifier.padding(it)) {
-            OAuthWebView(viewModel)
+            OAuthWebView(viewModel, navHostController)
         }
     }
 }
 
 @Composable
-fun OAuthWebView(viewModel: LoginOauthViewModel) {
+fun OAuthWebView(
+    viewModel: LoginOauthViewModel,
+    navHostController: NavHostController,
+) {
     val url = "https://github.com/login/oauth/authorize?client_id=${BuildConfig.CLIENT_ID}&state=app&redirect_uri=${AppConfig.AuthUri}"
 
     var rememberWebProgress: Int by remember { mutableStateOf(-1)}
@@ -70,9 +71,15 @@ fun OAuthWebView(viewModel: LoginOauthViewModel) {
     Box(Modifier.fillMaxSize()) {
         CustomWebView(
             url = url,
+            istoInterceptBackKey = true,
             onBack = {
-            it?.goBack()
-        },
+                if (it?.canGoBack() == true) {
+                    it.goBack()
+                }
+                else {
+                    navHostController.popBackStack()
+                }
+            },
             onShouldOverrideUrlLoading = { _: WebView?, request: WebResourceRequest? ->
                 if (request != null && request.url != null &&
                     request.url.toString().startsWith(AppConfig.AuthUri)) {
@@ -104,7 +111,7 @@ fun OAuthWebView(viewModel: LoginOauthViewModel) {
 
         LinearProgressIndicator(
             progress = rememberWebProgress * 1.0F / 100F,
-            color = Color.Red,
+            color = MaterialTheme.colorScheme.primary,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(if (rememberWebProgress == 100) 0.dp else 5.dp))

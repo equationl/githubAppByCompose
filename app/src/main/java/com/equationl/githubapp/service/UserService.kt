@@ -30,7 +30,7 @@ interface UserService {
 
 
     @GET("user/following/{user}")
-    fun checkFollowing(
+    suspend fun checkFollowing(
             @Path("user") user: String
     ):Response<ResponseBody>
 
@@ -44,12 +44,12 @@ interface UserService {
     ):Response<ResponseBody>
 
     @PUT("user/following/{user}")
-    fun followUser(
+    suspend fun followUser(
             @Path("user") user: String
     ):Response<ResponseBody>
 
     @DELETE("user/following/{user}")
-    fun unfollowUser(
+    suspend fun unfollowUser(
             @Path("user") user: String
     ):Response<ResponseBody>
 
@@ -92,7 +92,7 @@ interface UserService {
     ):Response<ArrayList<Event>>
 
     @GET("orgs/{org}/members")
-    fun getOrgMembers(
+    suspend fun getOrgMembers(
             @Header("forceNetWork") forceNetWork: Boolean,
             @Path("org") org: String,
             @Query("page") page: Int,

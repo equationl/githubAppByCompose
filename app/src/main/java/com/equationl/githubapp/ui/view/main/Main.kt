@@ -242,6 +242,7 @@ private fun MainDrawerContent(
     navController: NavHostController,
 ) {
     val editDialogState: MaterialDialogState = rememberMaterialDialogState(false)
+    val logoutDialogState: MaterialDialogState = rememberMaterialDialogState(false)
     val context = LocalContext.current
 
     Column(
@@ -286,9 +287,7 @@ private fun MainDrawerContent(
                 Text(text = "应用关于")
             }
             TextButton(onClick = {
-                viewModel.dispatch(MainViewAction.Logout)
-
-                navController.popBackStack(Route.LOGIN, true)
+                logoutDialogState.show()
             }) {
                 Text(text = "退出登陆", color = Color.Red)
             }
@@ -297,6 +296,14 @@ private fun MainDrawerContent(
 
     FeedBackDialog(dialogState = editDialogState) {
         viewModel.dispatch(MainViewAction.PostFeedBack(it))
+    }
+
+    LogoutDialog(dialogState = logoutDialogState) {
+        viewModel.dispatch(MainViewAction.Logout)
+
+        navController.navigate(Route.LOGIN) {
+            popUpTo(0)
+        }
     }
 }
 
@@ -338,6 +345,49 @@ private fun UpdateDialog(
                     context.browse("https://github.com/equationl/githubAppByCompose/releases")
                 }) {
                     Text(text = "更新")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LogoutDialog(
+    dialogState: MaterialDialogState,
+    onConfirm: () -> Unit
+) {
+    MaterialDialog(
+        dialogState = dialogState,
+        autoDismiss = true,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(4.dp)
+        ) {
+
+            Text(text = "确定要退出吗？", modifier = Modifier.padding(32.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min)
+            ) {
+                TextButton(onClick = { dialogState.hide() }) {
+                    Text(text = "取消")
+                }
+
+                Divider(modifier = Modifier
+                    .fillMaxHeight()
+                    .width(1.dp))
+
+                TextButton(onClick = {
+                    dialogState.hide()
+
+                    onConfirm()
+                }) {
+                    Text(text = "确定")
                 }
             }
         }

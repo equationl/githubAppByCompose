@@ -9,12 +9,16 @@ enum class GeneralListEnum {
     UserRepository,
     /**用户star*/
     UserStar,
+    /**用户最近更新的仓库列表*/
+    UserHonor,
     /**仓库star用户*/
     RepositoryStarUser,
     /**仓库被fork列表*/
     RepositoryForkUser,
     /**仓库订阅用户*/
     RepositoryWatchUser,
+    /** 组织成员 */
+    OrgMembers,
 }
 
 enum class GeneralRepoListSort(val showName: String, val requestValue: String) {

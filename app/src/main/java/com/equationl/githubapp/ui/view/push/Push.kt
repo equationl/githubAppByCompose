@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
@@ -43,11 +41,10 @@ import com.equationl.githubapp.model.ui.FileUIModel
 import com.equationl.githubapp.model.ui.PushUIModel
 import com.equationl.githubapp.ui.common.AvatarContent
 import com.equationl.githubapp.ui.common.BaseEvent
+import com.equationl.githubapp.ui.common.BaseRefresh
 import com.equationl.githubapp.ui.common.FileItem
 import com.equationl.githubapp.ui.common.MoreMenu
 import com.equationl.githubapp.ui.common.TopBar
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
@@ -151,54 +148,21 @@ private fun PushContent(
     onClickFileItem: (fileUiModel: FileUIModel) -> Unit,
     onRefresh: () -> Unit
 ) {
-    PushRefreshContent(
-        isRefresh, pushUIModel, itemList, navController, onClickFileItem, onRefresh
-    )
-}
 
-@Composable
-private fun PushRefreshContent(
-    isRefresh: Boolean,
-    pushUIModel: PushUIModel,
-    itemList: List<FileUIModel>,
-    navController: NavHostController,
-    onClickFileItem: (fileUiModel: FileUIModel) -> Unit,
-    onRefresh: () -> Unit
-) {
-    val rememberSwipeRefreshState = rememberSwipeRefreshState(isRefreshing = false)
-
-    rememberSwipeRefreshState.isRefreshing = isRefresh
-
-    SwipeRefresh(
-        state = rememberSwipeRefreshState,
-        onRefresh = onRefresh,
-        modifier = Modifier.fillMaxSize()
-    ) {
-        PushLazyColumn(pushUIModel = pushUIModel, itemList = itemList, navController = navController, onClickFileItem = onClickFileItem)
-    }
-}
-
-@Composable
-private fun PushLazyColumn(
-    pushUIModel: PushUIModel,
-    itemList: List<FileUIModel>,
-    navController: NavHostController,
-    onClickFileItem: (fileUiModel: FileUIModel) -> Unit
-) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        item(key = "Header") {
-            Header(pushUIModel = pushUIModel, navController = navController)
-        }
-
-        items(
-            items = itemList,
-            key = { item -> "${item.dir}${item.title}${item.sha}" }
-        ) {
+    BaseRefresh(
+        isRefresh = isRefresh,
+        itemList = itemList,
+        itemUi = {
             FileItem(fileUiModel = it, onClickFileItem)
+        },
+        onRefresh = onRefresh,
+        onClickItem = onClickFileItem,
+        headerItem = {
+            item(key = "Header") {
+                Header(pushUIModel = pushUIModel, navController = navController)
+            }
         }
-    }
+    )
 }
 
 @Composable

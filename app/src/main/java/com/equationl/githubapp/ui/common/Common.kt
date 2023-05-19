@@ -1,24 +1,40 @@
 package com.equationl.githubapp.ui.common
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.request.CachePolicy
@@ -26,6 +42,8 @@ import coil.request.ImageRequest
 import com.equationl.githubapp.R
 import com.equationl.githubapp.common.route.Route
 import com.equationl.githubapp.model.ui.FileUIModel
+import com.equationl.githubapp.model.ui.ReposUIModel
+import com.ireward.htmlcompose.HtmlText
 
 @Composable
 fun VerticalIconText(
@@ -59,6 +77,63 @@ fun FileItem(
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(4.dp)) {
                 Icon(imageVector = fileUiModel.icon, contentDescription = "File")
                 Text(text = fileUiModel.title)
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RepoItem(
+    data: ReposUIModel,
+    navController: NavHostController,
+    onClick: () -> Unit
+) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.padding(8.dp)
+    ) {
+        Column(modifier = Modifier.padding(8.dp)) {
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    AvatarContent(
+                        data = data.ownerPic,
+                        navHostController = navController,
+                        userName = data.ownerName
+                    )
+
+                    Column(
+                        modifier = Modifier.padding(start = 4.dp)
+                    ) {
+                        Text(
+                            text = data.repositoryName,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Row {
+                            Icon(imageVector = Icons.Filled.Person, contentDescription = null)
+                            Text(text = data.ownerName)
+                        }
+                    }
+                }
+
+                Text(text = data.repositoryType)
+            }
+
+            HtmlText(
+                text = data.repositoryDes
+            )
+
+            Row(
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                VerticalIconText(icon = Icons.Filled.StarBorder, text = data.repositoryStar)
+                VerticalIconText(icon = Icons.Filled.Share, text = data.repositoryFork)
+                VerticalIconText(icon = Icons.Filled.Visibility, text = data.repositoryWatch)
             }
         }
     }
@@ -99,6 +174,34 @@ fun AvatarContent(
 }
 
 @Composable
+fun CheckBoxGroup(
+    options: List<String>,
+    defaultCheck: Int,
+    onCheckChange: (index: Int) -> Unit,
+) {
+    var checkIndex by remember { mutableStateOf(defaultCheck) }
+    // checkIndex = defaultCheck
+
+    Column {
+        options.forEachIndexed { index, s ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(if (checkIndex == index) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.background)
+                    .clickable {
+                        checkIndex = index
+                        onCheckChange(index)
+                    }
+            ) {
+                Checkbox(checked = checkIndex == index, onCheckedChange = {})
+                Text(text = s, color = if (checkIndex == index) MaterialTheme.colorScheme.onSecondary else Color.Unspecified)
+            }
+        }
+    }
+}
+
+@Composable
 fun EmptyItem(isNotInit: Boolean = false) {
     if (isNotInit) {
         Text(text = "暂时没有任何数据哦~~")
@@ -106,4 +209,9 @@ fun EmptyItem(isNotInit: Boolean = false) {
     else {
         Text(text = "暂时没有任何数据哦～")
     }
+}
+
+@Composable
+fun LoadItem() {
+    Text(text = "加载中……")
 }
