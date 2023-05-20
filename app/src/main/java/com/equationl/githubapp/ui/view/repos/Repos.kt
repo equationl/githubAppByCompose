@@ -5,16 +5,20 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Visibility
@@ -23,14 +27,18 @@ import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.BottomSheetScaffoldState
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -43,8 +51,8 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.equationl.githubapp.ui.common.BaseEvent
@@ -54,6 +62,9 @@ import com.equationl.githubapp.ui.view.repos.action.ReposActionContent
 import com.equationl.githubapp.ui.view.repos.file.ReposFileContent
 import com.equationl.githubapp.ui.view.repos.issue.ReposIssueContent
 import com.equationl.githubapp.ui.view.repos.readme.ReposReadmeContent
+import com.vanpra.composematerialdialogs.MaterialDialog
+import com.vanpra.composematerialdialogs.MaterialDialogState
+import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -71,6 +82,7 @@ fun RepoDetailScreen(
     val pagerState = rememberPagerState()
     val scaffoldState = rememberBottomSheetScaffoldState()
     val coroutineScope = rememberCoroutineScope()
+    val createIssueDialogState: MaterialDialogState = rememberMaterialDialogState(false)
 
     var pagerUserScrollEnabled by remember { mutableStateOf(true) }
 
@@ -135,6 +147,9 @@ fun RepoDetailScreen(
                 },
                 onFork = {
                     viewModel.dispatch(ReposViewAction.ClickFork(repoOwner ?: "", repoName ?: ""))
+                },
+                onCreateIssue = {
+                    createIssueDialogState.show()
                 }
             )
         },
@@ -160,6 +175,10 @@ fun RepoDetailScreen(
 
             MainContent(pagerState, navController, scaffoldState, repoName, repoOwner, pagerUserScrollEnabled)
         }
+
+        CreateIssueDialog(dialogState = createIssueDialogState, onPostDate = { tittle: String, content: String ->
+            viewModel.dispatch(ReposViewAction.CreateIssue(repoOwner ?: "", repoName ?: "", tittle, content))
+        })
     }
 }
 
@@ -199,49 +218,30 @@ private fun BottomBar(
     isWatch: Boolean,
     onChangeStar: (isStar: Boolean) -> Unit,
     onChangeWatch: (isWatch: Boolean) -> Unit,
-    onFork: () -> Unit
+    onFork: () -> Unit,
+    onCreateIssue: () -> Unit
 ) {
     Column(modifier = Modifier.navigationBarsPadding()) {
-        BottomAppBar {
-            Spacer(Modifier.weight(0.4f, true))
-
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier
-                .fillMaxWidth()
-                .weight(0.6f)
-            ) {
-
-                BottomItem(text = "fork", icon = Icons.Filled.Share) {
-                    onFork()
+        BottomAppBar(
+            actions = {
+                IconButton(onClick = { onFork() }) {
+                    Icon(imageVector = Icons.Filled.Share, contentDescription = "Fork")
                 }
 
-                BottomItem(
-                    text = if (isWatch) "unWatch" else "watch",
-                    icon = if (isWatch) Icons.Filled.Visibility else Icons.Outlined.Visibility
-                ) {
-                    onChangeWatch(!isWatch)
+                IconButton(onClick = { onChangeWatch(!isWatch) }) {
+                    Icon(imageVector = if (isWatch) Icons.Filled.Visibility else Icons.Outlined.Visibility, contentDescription = "Watch")
                 }
 
-                BottomItem(
-                    text = if (isStar) "unStar" else "star",
-                    icon = if (isStar) Icons.Filled.Star else Icons.Outlined.StarBorder
-                ) {
-                    onChangeStar(!isStar)
+                IconButton(onClick = { onChangeStar(!isStar) }) {
+                    Icon(imageVector = if (isStar) Icons.Filled.Star else Icons.Outlined.StarBorder, contentDescription = "Star")
+                }
+            },
+            floatingActionButton = {
+                FloatingActionButton(onClick = { onCreateIssue() }) {
+                    Icon(imageVector = Icons.Filled.Add, contentDescription = "Add issue")
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun BottomItem(text: String, icon: ImageVector, onClick: () -> Unit) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.clickable { onClick() }
-    ) {
-        Icon(imageVector = icon, contentDescription = text)
-        Text(text = text)
+        )
     }
 }
 
@@ -292,5 +292,80 @@ private fun TabItem(
             .clickable(onClick = onScrollTo)) {
 
         Text(title, color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Unspecified)
+    }
+}
+
+@Composable
+private fun CreateIssueDialog(
+    dialogState: MaterialDialogState,
+    onPostDate: (tittle: String, content: String) -> Unit
+) {
+    var title by remember { mutableStateOf("") }
+    var content by remember { mutableStateOf("") }
+
+
+
+    MaterialDialog(
+        dialogState = dialogState,
+        autoDismiss = true,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(4.dp)
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp)
+            ) {
+
+                Text(text = "新建 ISSUE")
+            }
+
+            OutlinedTextField(
+                value = title,
+                onValueChange = { title = it},
+                label = {
+                    Text(text = "标题")
+                },
+                singleLine = true
+            )
+
+            OutlinedTextField(
+                value = content,
+                onValueChange = { content = it },
+                label = {
+                    Text(text = "内容（支持 markdown）")
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+            )
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min)
+            ) {
+                TextButton(onClick = { dialogState.hide() }) {
+                    Text(text = "取消")
+                }
+
+                Divider(modifier = Modifier
+                    .fillMaxHeight()
+                    .width(1.dp))
+
+                TextButton(onClick = {
+                    dialogState.hide()
+
+                    onPostDate(title, content)
+                }) {
+                    Text(text = "确定")
+                }
+            }
+        }
     }
 }

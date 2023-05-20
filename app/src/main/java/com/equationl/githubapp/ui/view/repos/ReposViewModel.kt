@@ -5,10 +5,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
+import com.equationl.githubapp.common.route.Route
 import com.equationl.githubapp.common.utlis.CommonUtils
 import com.equationl.githubapp.common.utlis.browse
 import com.equationl.githubapp.common.utlis.copy
 import com.equationl.githubapp.common.utlis.share
+import com.equationl.githubapp.model.bean.Issue
+import com.equationl.githubapp.service.IssueService
 import com.equationl.githubapp.service.RepoService
 import com.equationl.githubapp.ui.common.BaseAction
 import com.equationl.githubapp.ui.common.BaseEvent
@@ -19,7 +22,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ReposViewModel @Inject constructor(
-    val repoService: RepoService,
+    private val repoService: RepoService,
+    private val issueService: IssueService
 ) : BaseViewModel() {
 
     var viewStates by mutableStateOf(ReposViewState())
@@ -33,6 +37,7 @@ class ReposViewModel @Inject constructor(
             is ReposViewAction.ClickFork -> clickFork(action.userName, action.repoName)
             is ReposViewAction.OnChangeStar -> onChangeStar(action.isStar, action.userName, action.repoName)
             is ReposViewAction.OnChangeWatch -> onChangeWatch(action.isWatch, action.userName,action.repoName)
+            is ReposViewAction.CreateIssue -> createIssue(action.userName, action.repoName, action.title, action.content)
         }
     }
 
@@ -104,6 +109,27 @@ class ReposViewModel @Inject constructor(
             }
         }
     }
+
+    private fun createIssue(userName: String, repoName: String, title: String, content: String) {
+        viewModelScope.launch(exception) {
+            val issue = Issue()
+            issue.title = title
+            issue.body = content
+            val response = issueService.createIssue(userName, repoName, issue)
+            if (response.isSuccessful) {
+                val body = response.body()
+                if (body != null) {
+                    _viewEvents.trySend(
+                        ReposViewEvent.Goto(
+                        "${Route.ISSUE_DETAIL}/${repoName}/${userName}/${body.number}"
+                    ))
+                }
+            }
+            else {
+                _viewEvents.send(BaseEvent.ShowMsg("创建 issue 失败：${response.errorBody()?.string()}"))
+            }
+        }
+    }
 }
 
 data class ReposViewState(
@@ -123,6 +149,7 @@ sealed class ReposViewAction: BaseAction() {
     data class ClickFork(val userName: String, val repoName: String): ReposViewAction()
     data class ScrollTo(val pager: ReposPager): ReposViewAction()
     data class ClickMoreMenu(val context: Context, val pos: Int, val userName: String, val repoName: String): ReposViewAction()
+    data class CreateIssue(val userName: String, val repoName: String, val title: String, val content: String): ReposViewAction()
 }
 
 enum class ReposPager {

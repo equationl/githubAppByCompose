@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Comment
+import androidx.compose.material.icons.filled.ChatBubble
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.MoreHoriz
 import androidx.compose.material3.Card
 import androidx.compose.material3.Divider
@@ -44,6 +46,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.equationl.githubapp.common.route.Route
 import com.equationl.githubapp.common.utlis.copy
 import com.equationl.githubapp.model.ui.IssueUIModel
 import com.equationl.githubapp.ui.common.AvatarContent
@@ -51,7 +54,7 @@ import com.equationl.githubapp.ui.common.BaseRefreshPaging
 import com.equationl.githubapp.ui.common.MoreMenu
 import com.equationl.githubapp.ui.common.TopBar
 import com.halilibo.richtext.markdown.Markdown
-import com.halilibo.richtext.ui.material.MaterialRichText
+import com.halilibo.richtext.ui.material3.Material3RichText
 import com.vanpra.composematerialdialogs.MaterialDialog
 import com.vanpra.composematerialdialogs.MaterialDialogState
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
@@ -107,6 +110,15 @@ fun IssueDetailScreen(
                             viewModel.dispatch(IssueAction.ClickMoreMenu(context, it, userName, repoName, issueNumber))
                         }
                     )
+                    // 如果是从仓库详情页跳转过来的则不显示返回仓库主页按钮
+                    val isShowHomeIcon = navController.backQueue.getOrNull(navController.backQueue.lastIndex - 1)?.destination?.route?.contains(Route.REPO_DETAIL) == false
+                    if (isShowHomeIcon) {
+                        IconButton(onClick = {
+                            navController.navigate("${Route.REPO_DETAIL}/${repoName}/${userName}")
+                        }) {
+                            Icon(imageVector = Icons.Filled.Home , contentDescription = "Repo Home")
+                        }
+                    }
 
                     IconButton(onClick = { isShowDropMenu = !isShowDropMenu}) {
                         Icon(Icons.Outlined.MoreHoriz, "More")
@@ -398,7 +410,7 @@ private fun CommentItem(
                 Text(text = issueUIModel.time)
             }
 
-            MaterialRichText(modifier = Modifier.padding(start = 30.dp)) {
+            Material3RichText(modifier = Modifier.padding(start = 30.dp)) {
                 Markdown(content = issueUIModel.action)
             }
         }
@@ -421,7 +433,7 @@ private fun Header(
                     userName = issueUIModel.username
                 )
 
-                Column {
+                Column(modifier = Modifier.padding(start = 6.dp)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -435,9 +447,12 @@ private fun Header(
                             )
 
                             Row {
-                                Text(text = issueUIModel.status)
+                                val color = if (issueUIModel.status == "closed") MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary
+
+                                Icon(imageVector = Icons.Outlined.Info, contentDescription = "Issue status", tint = color)
+                                Text(text = issueUIModel.status, color = color)
                                 Text(text = "#${issueUIModel.issueNum}", modifier = Modifier.padding(start = 4.dp))
-                                Icon(imageVector = Icons.Filled.Comment, contentDescription = "comment", modifier = Modifier.padding(start = 4.dp))
+                                Icon(imageVector = Icons.Filled.ChatBubble, contentDescription = "comment", modifier = Modifier.padding(start = 4.dp))
                                 Text(text = issueUIModel.comment)
                             }
                         }
@@ -445,13 +460,22 @@ private fun Header(
                         Text(text = issueUIModel.time)
                     }
 
-                    Text(text = issueUIModel.action)
+                    Text(text = issueUIModel.action, color = MaterialTheme.colorScheme.secondary)
                 }
             }
 
-            MaterialRichText {
-                Markdown(content = issueUIModel.content)
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 6.dp)
+            ) {
+                // TODO md 中的图片太小了，看不清楚
+                Material3RichText {
+                    Markdown(content = issueUIModel.content)
+                }
             }
+
         }
     }
 }

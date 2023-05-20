@@ -4,15 +4,17 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Comment
+import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Apps
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -161,7 +163,11 @@ private fun ReposIssueItem(
                         navHostController = navController
                     )
 
-                    Text(text = issueUIModel.username, modifier = Modifier.padding(start = 4.dp))
+                    Text(
+                        text = issueUIModel.username,
+                        fontWeight = FontWeight.Black,
+                        modifier = Modifier.padding(start = 6.dp)
+                    )
 
                 }
 
@@ -173,14 +179,16 @@ private fun ReposIssueItem(
                 .padding(4.dp)) {
                 Text(text = issueUIModel.action)
 
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Row(modifier = Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                     Row {
-                        Text(text = issueUIModel.status)
-                        Text(text = "#${issueUIModel.issueNum}")
+                        val color = if (issueUIModel.status == "closed") MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary
+                        Icon(imageVector = Icons.Outlined.Info, contentDescription = "Issue status", tint = color)
+                        Text(text = issueUIModel.status, color = color)
+                        Text(text = "#${issueUIModel.issueNum}", modifier = Modifier.padding(start = 2.dp))
                     }
 
                     Row {
-                        Icon(imageVector = Icons.Filled.Comment, contentDescription = null)
+                        Icon(imageVector = Icons.Filled.ChatBubble, contentDescription = "comment")
                         Text(text = issueUIModel.comment)
                     }
                 }
