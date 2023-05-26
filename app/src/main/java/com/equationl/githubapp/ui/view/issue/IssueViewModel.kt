@@ -5,13 +5,14 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.equationl.githubapp.common.config.AppConfig
+import com.equationl.githubapp.common.database.CacheDB
+import com.equationl.githubapp.common.database.DBIssueDetail
 import com.equationl.githubapp.common.utlis.CommonUtils
 import com.equationl.githubapp.common.utlis.browse
 import com.equationl.githubapp.common.utlis.copy
@@ -22,18 +23,21 @@ import com.equationl.githubapp.model.conversion.IssueConversion
 import com.equationl.githubapp.model.paging.IssueCommentsPagingSource
 import com.equationl.githubapp.model.ui.IssueUIModel
 import com.equationl.githubapp.service.IssueService
+import com.equationl.githubapp.ui.common.BaseAction
+import com.equationl.githubapp.ui.common.BaseEvent
+import com.equationl.githubapp.ui.common.BaseViewModel
+import com.equationl.githubapp.util.fromJson
+import com.equationl.githubapp.util.toJson
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class IssueViewModel @Inject constructor(
-    private val issueService: IssueService
-): ViewModel() {
+    private val issueService: IssueService,
+    private val dataBase: CacheDB
+): BaseViewModel() {
     private var userName: String? = null
     private var repoName: String? = null
     private var issueCommentFlow: Flow<PagingData<IssueUIModel>>? = null
@@ -41,25 +45,19 @@ class IssueViewModel @Inject constructor(
     var viewStates by mutableStateOf(IssueState(issueCommentFlow = issueCommentFlow))
         private set
 
-    private val _viewEvents = Channel<IssueEvent>(Channel.BUFFERED)
-    val viewEvents = _viewEvents.receiveAsFlow()
-
-    private val exception = CoroutineExceptionHandler { _, throwable ->
-        viewModelScope.launch {
-            Log.e("RVM", "Request Error: ", throwable)
-            _viewEvents.send(IssueEvent.ShowMsg("错误："+throwable.message))
-        }
-    }
-
-
     fun dispatch(action: IssueAction) {
         when (action) {
             is IssueAction.ShowMag -> {
-                _viewEvents.trySend(IssueEvent.ShowMsg(action.msg))
+                _viewEvents.trySend(BaseEvent.ShowMsg(action.msg))
             }
             is IssueAction.LoadData -> {
+                if (isInit) return
+
                 viewModelScope.launch(exception) {
-                    loadData(action.userName, action.repoName, action.issueNumber)
+                    loadIssueInfo(action.userName, action.repoName, action.issueNumber)
+                }
+                viewModelScope.launch(exception) {
+                    loadCommentData(action.userName, action.repoName, action.issueNumber)
                 }
             }
 
@@ -81,7 +79,7 @@ class IssueViewModel @Inject constructor(
             }
             1 -> { // 复制链接
                 context.copy(realUrl)
-                _viewEvents.trySend(IssueEvent.ShowMsg("已复制"))
+                _viewEvents.trySend(BaseEvent.ShowMsg("已复制"))
             }
             2 -> { // 分享
                 context.share(realUrl)
@@ -94,10 +92,10 @@ class IssueViewModel @Inject constructor(
             val response = issueService.deleteComment(userName ?: "", repoName ?: "", comment.status)
             if (response.isSuccessful) {
                 _viewEvents.trySend(IssueEvent.Refresh)
-                _viewEvents.trySend(IssueEvent.ShowMsg("已删除"))
+                _viewEvents.trySend(BaseEvent.ShowMsg("已删除"))
             }
             else {
-                _viewEvents.trySend(IssueEvent.ShowMsg("删除失败：${response.errorBody()?.string()}"))
+                _viewEvents.trySend(BaseEvent.ShowMsg("删除失败：${response.errorBody()?.string()}"))
             }
         }
     }
@@ -117,15 +115,15 @@ class IssueViewModel @Inject constructor(
             if (response.isSuccessful) {
                 val body = response.body()
                 if (body == null) {
-                    _viewEvents.trySend(IssueEvent.ShowMsg("body is null!"))
+                    _viewEvents.trySend(BaseEvent.ShowMsg("body is null!"))
                 }
                 else {
                     _viewEvents.trySend(IssueEvent.Refresh)
-                    _viewEvents.trySend(IssueEvent.ShowMsg("回复成功"))
+                    _viewEvents.trySend(BaseEvent.ShowMsg("回复成功"))
                 }
             }
             else {
-                _viewEvents.trySend(IssueEvent.ShowMsg("添加失败：${response.errorBody()?.string()}"))
+                _viewEvents.trySend(BaseEvent.ShowMsg("添加失败：${response.errorBody()?.string()}"))
             }
         }
     }
@@ -138,15 +136,15 @@ class IssueViewModel @Inject constructor(
             if (response.isSuccessful) {
                 val body = response.body()
                 if (body == null) {
-                    _viewEvents.trySend(IssueEvent.ShowMsg("body is null!"))
+                    _viewEvents.trySend(BaseEvent.ShowMsg("body is null!"))
                 }
                 else {
                     _viewEvents.trySend(IssueEvent.Refresh)
-                    _viewEvents.trySend(IssueEvent.ShowMsg("编辑成功"))
+                    _viewEvents.trySend(BaseEvent.ShowMsg("编辑成功"))
                 }
             }
             else {
-                _viewEvents.trySend(IssueEvent.ShowMsg("编辑失败：${response.errorBody()?.string()}"))
+                _viewEvents.trySend(BaseEvent.ShowMsg("编辑失败：${response.errorBody()?.string()}"))
             }
         }
     }
@@ -157,7 +155,7 @@ class IssueViewModel @Inject constructor(
             if (response.isSuccessful) {
                 val body = response.body()
                 if (body == null) {
-                    _viewEvents.trySend(IssueEvent.ShowMsg("body is null!"))
+                    _viewEvents.trySend(BaseEvent.ShowMsg("body is null!"))
                 }
                 else {
                     val newIssueInfo = IssueConversion.issueToIssueUIModel(body)
@@ -165,7 +163,7 @@ class IssueViewModel @Inject constructor(
                 }
             }
             else {
-                _viewEvents.trySend(IssueEvent.ShowMsg("修改失败：${response.errorBody()?.string()}"))
+                _viewEvents.trySend(BaseEvent.ShowMsg("修改失败：${response.errorBody()?.string()}"))
             }
         }
     }
@@ -188,12 +186,12 @@ class IssueViewModel @Inject constructor(
                 viewStates = viewStates.copy(issueInfo = viewStates.issueInfo.copy(locked = locked))
             }
             else {
-                _viewEvents.trySend(IssueEvent.ShowMsg("修改失败：${response.errorBody()?.string()}"))
+                _viewEvents.trySend(BaseEvent.ShowMsg("修改失败：${response.errorBody()?.string()}"))
             }
         }
     }
 
-    private suspend fun loadData(
+    private suspend fun loadCommentData(
         userName: String,
         repoName: String,
         issueNumber: Int
@@ -201,46 +199,74 @@ class IssueViewModel @Inject constructor(
         this.userName = userName
         this.repoName = repoName
 
+        val cacheData = dataBase.cacheDB().queryIssueComment("$userName/$repoName", issueNumber.toString())
+        if (!cacheData.isNullOrEmpty()) {
+            val body = cacheData[0].data?.fromJson<List<com.equationl.githubapp.model.bean.IssueEvent>>()
+            if (body != null) {
+                Log.i("el", "refreshData: 使用缓存数据")
+                viewStates = viewStates.copy(cacheCommentList = body.map { IssueConversion.issueEventToIssueUIModel(it) })
+            }
+        }
+
         issueCommentFlow = Pager(
             PagingConfig(pageSize = AppConfig.PAGE_SIZE, initialLoadSize = AppConfig.PAGE_SIZE)
         ) {
-            IssueCommentsPagingSource(userName, repoName, issueNumber, issueService)
+            IssueCommentsPagingSource(userName, repoName, issueNumber, issueService, dataBase) {
+                viewStates = viewStates.copy(cacheCommentList = null)
+                isInit = true
+            }
         }.flow.cachedIn(viewModelScope)
 
-        val issueInfo = loadIssueInfo(userName, repoName, issueNumber)
-
-        viewStates = viewStates.copy(issueCommentFlow = issueCommentFlow, issueInfo = issueInfo)
+        viewStates = viewStates.copy(issueCommentFlow = issueCommentFlow)
     }
 
     private suspend fun loadIssueInfo(
         userName: String,
         repoName: String,
         issueNumber: Int
-    ): IssueUIModel {
+    ) {
+        val cacheData = dataBase.cacheDB().queryIssueDetail("$userName/$repoName", issueNumber.toString())
+        if (!cacheData.isNullOrEmpty()) {
+            val body = cacheData[0].data?.fromJson<Issue>()
+            if (body != null) {
+                Log.i("el", "refreshData: 使用缓存数据")
+                viewStates = viewStates.copy(cacheIssueInfo = IssueConversion.issueToIssueUIModel(body))
+            }
+        }
+
         val response = issueService.getIssueInfo(true, userName, repoName, issueNumber)
         if (response.isSuccessful) {
             val body = response.body()
             if (body == null) {
-                _viewEvents.trySend(IssueEvent.ShowMsg("body is null!"))
+                _viewEvents.trySend(BaseEvent.ShowMsg("body is null!"))
             }
             else {
-                return IssueConversion.issueToIssueUIModel(body)
+                dataBase.cacheDB().insertIssueDetail(
+                    DBIssueDetail(
+                        "$userName/$repoName",
+                        "$userName/$repoName",
+                        issueNumber.toString(),
+                        response.body()?.toJson()
+                    )
+                )
+
+                viewStates = viewStates.copy(issueInfo = IssueConversion.issueToIssueUIModel(body), cacheIssueInfo = null)
             }
         }
         else {
-            _viewEvents.trySend(IssueEvent.ShowMsg("获取失败：${response.errorBody()?.string()}"))
+            _viewEvents.trySend(BaseEvent.ShowMsg("获取失败：${response.errorBody()?.string()}"))
         }
-
-        return IssueUIModel()
     }
 }
 
 data class IssueState(
     val issueCommentFlow: Flow<PagingData<IssueUIModel>>?,
-    val issueInfo: IssueUIModel = IssueUIModel()
+    val issueInfo: IssueUIModel = IssueUIModel(),
+    val cacheIssueInfo: IssueUIModel? = null,
+    val cacheCommentList: List<IssueUIModel>? = null
 )
 
-sealed class IssueAction {
+sealed class IssueAction: BaseAction() {
     data class ShowMag(val msg: String): IssueAction()
     data class LoadData(val userName: String, val repoName: String, val issueNumber: Int): IssueAction()
     data class OnChangeIssueStatus(val status: String): IssueAction()
@@ -252,9 +278,8 @@ sealed class IssueAction {
     data class ClickMoreMenu(val context: Context, val pos: Int, val userName: String, val repoName: String, val issueNumber: Int): IssueAction()
 }
 
-sealed class IssueEvent {
+sealed class IssueEvent: BaseEvent() {
     object Refresh: IssueEvent()
-    data class ShowMsg(val msg: String): IssueEvent()
 }
 
 enum class EditIssueDialogOperate {

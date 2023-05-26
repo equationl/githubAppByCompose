@@ -37,6 +37,7 @@ import com.equationl.githubapp.ui.common.RepoItem
 import com.equationl.githubapp.ui.common.TopBar
 import com.equationl.githubapp.ui.view.list.GeneralListEnum
 import com.equationl.githubapp.ui.view.list.GeneralRepoListSort
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,14 +55,16 @@ fun GeneralRepoListScreen(
         viewModel.viewEvents.collect {
             when (it) {
                 is BaseEvent.ShowMsg -> {
-                    scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                    launch {
+                        scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                    }
                 }
             }
         }
     }
 
     LaunchedEffect(Unit) {
-        viewModel.dispatch(GeneralRepoListAction.SetData(userName, repoName, requestType))
+        viewModel.dispatch(GeneralRepoListAction.SetData(userName, repoName, requestType, null, false))
     }
 
     Scaffold(
@@ -97,7 +100,7 @@ fun GeneralRepoListScreen(
                             onDismissRequest = { isShowDropMenu = false },
                             requestType,
                             onClick = {
-                                viewModel.dispatch(GeneralRepoListAction.SetData(userName, repoName, requestType, it))
+                                viewModel.dispatch(GeneralRepoListAction.SetData(userName, repoName, requestType, it, true))
                             }
                         )
                     }
@@ -118,6 +121,8 @@ fun GeneralRepoListScreen(
             GeneralRepoListContent(
                 navHostController = navHostController,
                 repoPagingItems = repoList,
+                cacheRepoList = viewState.cacheRepoList,
+                isInit = viewModel.isInit,
                 onLoadError = { msg ->
                     viewModel.dispatch(BaseAction.ShowMag(msg))
                 },
@@ -137,16 +142,23 @@ fun GeneralRepoListScreen(
 fun GeneralRepoListContent(
     navHostController: NavHostController,
     repoPagingItems: LazyPagingItems<ReposUIModel>?,
+    cacheRepoList: List<ReposUIModel>?,
+    isInit: Boolean,
     onLoadError: (msg: String) -> Unit,
     onClickItem: (eventUiModel: ReposUIModel) -> Unit,
     headerItem: (LazyListScope.() -> Unit)? = null,
     onRefresh: (() -> Unit)? = null
 ) {
+    if (repoPagingItems?.itemCount == 0 && isInit && cacheRepoList.isNullOrEmpty()) {
+        return
+    }
+
     BaseRefreshPaging(
         pagingItems = repoPagingItems,
-        itemUi = {
-            RepoItem(it, navHostController) {
-                onClickItem(it)
+        cacheItems = cacheRepoList,
+        itemUi = { data, isRefresh ->
+            RepoItem(data, isRefresh, navHostController) {
+                onClickItem(data)
             }
         },
         onLoadError = onLoadError,

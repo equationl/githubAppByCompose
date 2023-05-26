@@ -70,7 +70,9 @@ fun PushDetailScreen(
         viewModel.viewEvents.collect {
             when (it) {
                 is BaseEvent.ShowMsg -> {
-                    scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                    launch {
+                        scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                    }
                 }
                 is PushEvent.Goto -> {
                     navController.navigate(it.routePath)

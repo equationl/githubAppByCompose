@@ -23,10 +23,13 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.equationl.githubapp.R
 import com.equationl.githubapp.common.route.Route
+import com.equationl.githubapp.common.utlis.getImageLoader
 import com.equationl.githubapp.model.ui.ReposUIModel
+import com.equationl.githubapp.ui.common.BaseEvent
 import com.equationl.githubapp.ui.common.VerticalIconText
 import com.equationl.githubapp.ui.view.list.GeneralListEnum
 import com.equationl.githubapp.ui.view.repos.ReposPager
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,8 +44,10 @@ fun ReposActionContent(
     LaunchedEffect(Unit) {
         viewModel.viewEvents.collect {
             when (it) {
-                is RepoActionActionEvent.ShowMsg -> {
-                    scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                is BaseEvent.ShowMsg -> {
+                    launch {
+                        scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                    }
                 }
             }
         }
@@ -119,7 +124,8 @@ private fun ReposActionHeader(
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 alpha = 0.2f,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                imageLoader = LocalContext.current.getImageLoader()
             )
 
             Column(

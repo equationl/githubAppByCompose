@@ -3,6 +3,12 @@ package com.equationl.githubapp.model.paging
 import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import com.equationl.githubapp.common.database.CacheDB
+import com.equationl.githubapp.common.database.DBOrgMember
+import com.equationl.githubapp.common.database.DBRepositoryStar
+import com.equationl.githubapp.common.database.DBRepositoryWatcher
+import com.equationl.githubapp.common.database.DBUserFollowed
+import com.equationl.githubapp.common.database.DBUserFollower
 import com.equationl.githubapp.common.net.PageInfo
 import com.equationl.githubapp.model.conversion.UserConversion
 import com.equationl.githubapp.model.ui.UserUIModel
@@ -10,6 +16,7 @@ import com.equationl.githubapp.service.RepoService
 import com.equationl.githubapp.service.UserService
 import com.equationl.githubapp.ui.view.list.GeneralListEnum
 import com.equationl.githubapp.util.fromJson
+import com.equationl.githubapp.util.toJson
 import retrofit2.HttpException
 
 class UserPagingSource(
@@ -17,7 +24,9 @@ class UserPagingSource(
     private val repoServer: RepoService,
     private val userName: String,
     private val repoName: String,
-    private val requestType: GeneralListEnum
+    private val requestType: GeneralListEnum,
+    private val dataBase: CacheDB,
+    private val onLoadFirstPagSuccess: () -> Unit
 ): PagingSource<Int, UserUIModel>() {
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, UserUIModel> {
@@ -52,6 +61,66 @@ class UserPagingSource(
             Log.i("el", "load: 总页数 = $totalPage")
 
             val userUIModels = response.body()?.map { UserConversion.userToUserUIModel(it) }
+
+            if (nextPageNumber == 1) { // 缓存第一页数据
+                when (requestType) {
+                    GeneralListEnum.UserFollower -> {
+                        dataBase.cacheDB().insertUserFollower(
+                            DBUserFollower(
+                                userName,
+                                userName,
+                                response.body()?.toJson()
+                            )
+                        )
+
+                    }
+                    GeneralListEnum.UserFollowed -> {
+                        dataBase.cacheDB().insertUserFollowed(
+                            DBUserFollowed(
+                                userName,
+                                userName,
+                                response.body()?.toJson()
+                            )
+                        )
+
+                    }
+                    GeneralListEnum.RepositoryStarUser -> {
+                        dataBase.cacheDB().insertRepositoryStar(
+                            DBRepositoryStar(
+                                "$userName/$repoName",
+                                "$userName/$repoName",
+                                response.body()?.toJson()
+                            )
+                        )
+
+                    }
+                    GeneralListEnum.RepositoryWatchUser -> {
+                        dataBase.cacheDB().insertRepositoryWatcher(
+                            DBRepositoryWatcher(
+                                "$userName/$repoName",
+                                "$userName/$repoName",
+                                response.body()?.toJson()
+                            )
+                        )
+
+                    }
+                    GeneralListEnum.OrgMembers -> {
+                        dataBase.cacheDB().insertOrgMember(
+                            DBOrgMember(
+                                userName,
+                                userName,
+                                response.body()?.toJson()
+                            )
+                        )
+
+                    }
+                    else -> { }
+                }
+
+                if (!userUIModels.isNullOrEmpty()) {
+                    onLoadFirstPagSuccess()
+                }
+            }
 
             return LoadResult.Page(
                 data = userUIModels ?: listOf(),

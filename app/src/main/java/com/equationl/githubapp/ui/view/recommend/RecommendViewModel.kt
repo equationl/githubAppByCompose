@@ -4,41 +4,45 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.equationl.githubapp.common.config.AppConfig
 import com.equationl.githubapp.common.constant.LanguageFilter
+import com.equationl.githubapp.common.database.CacheDB
+import com.equationl.githubapp.common.database.DBTrendRepository
+import com.equationl.githubapp.model.bean.TrendingRepoModel
 import com.equationl.githubapp.model.conversion.ReposConversion
 import com.equationl.githubapp.model.ui.ReposUIModel
 import com.equationl.githubapp.service.RepoService
+import com.equationl.githubapp.ui.common.BaseAction
+import com.equationl.githubapp.ui.common.BaseEvent
+import com.equationl.githubapp.ui.common.BaseViewModel
+import com.equationl.githubapp.util.fromJson
+import com.equationl.githubapp.util.toJson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class RecommendViewModel @Inject constructor(
-    private val repoService: RepoService
-) : ViewModel() {
+    private val repoService: RepoService,
+    private val dataBase: CacheDB
+) : BaseViewModel() {
 
     var viewStates by mutableStateOf(RecommendState())
         private set
 
-    private val _viewEvents = Channel<RecommendEvent>(Channel.BUFFERED)
-    val viewEvents = _viewEvents.receiveAsFlow()
-
-    private val exception = CoroutineExceptionHandler { _, throwable ->
+    override val exception = CoroutineExceptionHandler { _, throwable ->
         viewModelScope.launch {
-            Log.e("RVM", "Request Error: ", throwable)
-            _viewEvents.send(RecommendEvent.ShowMsg("错误："+throwable.message))
+            Log.e("RecommendViewModel", "Request Error: ", throwable)
+            _viewEvents.send(BaseEvent.ShowMsg("错误："+throwable.message))
+            viewStates = viewStates.copy(isRefreshing = false)
         }
     }
 
     fun dispatch(action: RecommendAction) {
         when (action) {
-            is RecommendAction.RefreshData -> refreshData()
+            is RecommendAction.RefreshData -> refreshData(action.forceRefresh)
             is RecommendAction.ChangeLanguage -> changeLanguage(action.languageFilter)
             is RecommendAction.ChangeSinceFilter -> changeSince(action.sinceFilter)
         }
@@ -46,33 +50,58 @@ class RecommendViewModel @Inject constructor(
 
     private fun changeLanguage(languageFilter: LanguageFilter) {
         viewStates = viewStates.copy(languageFilter = languageFilter)
-        refreshData()
+        refreshData(true)
     }
 
     private fun changeSince(sinceFilter: RecommendSinceFilter) {
         viewStates = viewStates.copy(sinceFilter = sinceFilter)
-        refreshData()
+        refreshData(true)
     }
 
-    private fun refreshData() {
+    private fun refreshData(forceRefresh: Boolean) {
+        if (isInit && !forceRefresh) return
+
         viewModelScope.launch(exception) {
             viewStates = viewStates.copy(isRefreshing = true)
+
+
+            val cacheData = dataBase.cacheDB().queryTrend(viewStates.languageFilter.requestValue, viewStates.sinceFilter.requestValue)
+            if (!cacheData.isNullOrEmpty()) {
+                val body = cacheData[0].data?.fromJson<List<TrendingRepoModel>>()
+                if (body != null) {
+                    Log.i("el", "refreshData: 使用缓存数据")
+                    viewStates = viewStates.copy(cacheDataList = body.map { ReposConversion.trendToReposUIModel(it) })
+                }
+            }
+
+
             val response = repoService.getTrendDataAPI(true, AppConfig.API_TOKEN, viewStates.sinceFilter.requestValue, viewStates.languageFilter.requestValue)
             if (response.isSuccessful) {
                 val body = response.body()?.map { ReposConversion.trendToReposUIModel(it) }
                 if (body == null) {
-                    _viewEvents.trySend(RecommendEvent.ShowMsg("body is null!"))
+                    _viewEvents.trySend(BaseEvent.ShowMsg("body is null!"))
                     viewStates = viewStates.copy(isRefreshing = false)
                 }
                 else {
+                    val newCache = DBTrendRepository(
+                        key = viewStates.languageFilter.requestValue + viewStates.sinceFilter.requestValue,
+                        languageType = viewStates.languageFilter.requestValue,
+                        data = response.body()?.toJson(),
+                        since = viewStates.sinceFilter.requestValue
+                    )
+                    dataBase.cacheDB().insertTrend(newCache)
+
                     viewStates = viewStates.copy(
                         isRefreshing = false,
-                        dataList = body
+                        dataList = body,
+                        cacheDataList = null
                     )
+
+                    isInit = true
                 }
             }
             else {
-                _viewEvents.trySend(RecommendEvent.ShowMsg("获取失败：${response.errorBody()?.string()}"))
+                _viewEvents.trySend(BaseEvent.ShowMsg("获取失败：${response.errorBody()?.string()}"))
                 viewStates = viewStates.copy(isRefreshing = false)
             }
         }
@@ -81,19 +110,16 @@ class RecommendViewModel @Inject constructor(
 
 data class RecommendState(
     val dataList: List<ReposUIModel> = listOf(),
+    val cacheDataList: List<ReposUIModel>? = null,
     val isRefreshing: Boolean = false,
     val sinceFilter: RecommendSinceFilter = RecommendSinceFilter.Daily,
     val languageFilter: LanguageFilter = LanguageFilter.All
 )
 
-sealed class RecommendAction {
-    object RefreshData : RecommendAction()
+sealed class RecommendAction: BaseAction() {
+    data class RefreshData(val forceRefresh: Boolean) : RecommendAction()
     data class ChangeSinceFilter(val sinceFilter: RecommendSinceFilter) : RecommendAction()
     data class ChangeLanguage(val languageFilter: LanguageFilter) : RecommendAction()
-}
-
-sealed class RecommendEvent {
-    data class ShowMsg(val msg: String): RecommendEvent()
 }
 
 enum class RecommendSinceFilter(val showName: String, val requestValue: String) {

@@ -24,79 +24,79 @@ object EventConversion {
 
         when (event.type) {
             "CommitCommentEvent" -> {
-                actionStr = "Commit comment at " + event.repo?.name
+                actionStr = "**Commit comment at** *${event.repo?.name}*"
             }
             "CreateEvent" -> {
                 actionStr = if (event.payload?.refType == "repository") {
-                    "Created repository " + event.repo?.name
+                    "**Created repository** *${event.repo?.name}*"
                 } else {
-                    "Created " + event.payload?.refType + " " + event.payload?.ref + " at " + event.repo?.name
+                    "**Created** " + event.payload?.refType + " " + event.payload?.ref + " **at** *${event.repo?.name}*"
                 }
             }
             "DeleteEvent" -> {
-                actionStr = "Delete " + event.payload?.refType + " " + event.payload?.ref + " at " + event.repo?.name
+                actionStr = "**Delete** " + event.payload?.refType + " " + event.payload?.ref + " **at** *${event.repo?.name}*"
             }
             "ForkEvent" -> {
                 val oriRepo = event.repo?.name
                 val newRepo = event.actor?.login + "/" + event.repo?.name
-                actionStr = "Forked $oriRepo to $newRepo"
+                actionStr = "**Forked** *$oriRepo* **to** *$newRepo*"
 
             }
             "GollumEvent" -> {
-                actionStr = event.actor?.login + " a wiki page "
+                actionStr = "${event.actor?.login} **a wiki page**"
             }
 
             "InstallationEvent" -> {
-                actionStr = event.payload?.action + " an GitHub App "
+                actionStr = "**${event.payload?.action}** an **GitHub App**"
             }
             "InstallationRepositoriesEvent" -> {
-                actionStr = event.payload?.action + " repository from an installation "
+                actionStr = "**${event.payload?.action}** repository from an installation "
             }
             "IssueCommentEvent" -> {
-                actionStr = event.payload?.action + " comment on issue " + event.payload?.issue?.number.toString() + " in " + event.repo?.name
+                actionStr = "**${event.payload?.action} comment** on **issue #${event.payload?.issue?.number.toString()}** in *${event.repo?.name}*"
                 des = event.payload?.comment?.body
             }
             "IssuesEvent" -> {
-                actionStr = event.payload?.action + " issue " + event.payload?.issue?.number.toString() + " in " + event.repo?.name
+                actionStr = "**${event.payload?.action} issue #${event.payload?.issue?.number.toString()}** in *${event.repo?.name}*"
                 des = event.payload?.issue?.title
             }
 
             "MarketplacePurchaseEvent" -> {
-                actionStr = event.payload?.action + " marketplace plan "
+                actionStr = "**${event.payload?.action} marketplace plan** "
             }
             "MemberEvent" -> {
-                actionStr = event.payload?.action + " member to " + event.repo?.name
+                actionStr = "**${event.payload?.action} member** to *${event.repo?.name}*"
             }
             "OrgBlockEvent" -> {
-                actionStr = event.payload?.action + " a user "
+                actionStr ="**${event.payload?.action} a user** "
             }
             "ProjectCardEvent" -> {
-                actionStr = event.payload?.action + " a project "
+                actionStr = "**${event.payload?.action} a project** "
             }
             "ProjectColumnEvent" -> {
-                actionStr = event.payload?.action + " a project "
+                actionStr = "**${event.payload?.action} a project** "
             }
 
             "ProjectEvent" -> {
-                actionStr = event.payload?.action + " a project "
+                actionStr = "**${event.payload?.action} a project** "
             }
             "PublicEvent" -> {
-                actionStr = "Made " + event.repo?.name + " public"
+                actionStr = "**Made** *${event.repo?.name}* **public**"
             }
             "PullRequestEvent" -> {
-                actionStr = event.payload?.action + " pull request " + event.repo?.name
+                actionStr = "**${event.payload?.action} pull request** *${event.repo?.name}*"
             }
             "PullRequestReviewEvent" -> {
-                actionStr = event.payload?.action + " pull request review at" + event.repo?.name
+                actionStr = "**${event.payload?.action} pull request review** at *${event.repo?.name}*"
             }
             "PullRequestReviewCommentEvent" -> {
-                actionStr = event.payload?.action + " pull request review comment at" + event.repo?.name
+                actionStr = "**${event.payload?.action} pull request review comment** at *${event.repo?.name}*"
 
             }
             "PushEvent" -> {
                 var ref: String? = event.payload?.ref
                 ref = ref?.substring(ref.lastIndexOf("/") + 1)
-                actionStr = "Push to " + ref + " at " + event.repo?.name
+                actionStr = "**Push** to " + ref + " at *${event.repo?.name}*"
                 des = ""
                 var descSpan: String? = ""
                 val count = event.payload?.commits?.size!!
@@ -121,10 +121,10 @@ object EventConversion {
                 }
             }
             "ReleaseEvent" -> {
-                actionStr = event.payload?.action + " release " + event.payload?.release?.tagName + " at " + event.repo?.name
+                actionStr = "**${event.payload?.action} release** " + event.payload?.release?.tagName + " at *${event.repo?.name}*"
             }
             "WatchEvent" -> {
-                actionStr = event.payload?.action + " " + event.repo?.name
+                actionStr = "**${event.payload?.action}** *${event.repo?.name}*"
 
             }
         }

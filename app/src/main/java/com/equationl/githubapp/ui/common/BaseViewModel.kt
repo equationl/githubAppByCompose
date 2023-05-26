@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 open class BaseViewModel : ViewModel() {
+    open var isInit = false
+
     protected val _viewEvents = Channel<BaseEvent>(Channel.BUFFERED)
     val viewEvents = _viewEvents.receiveAsFlow()
 

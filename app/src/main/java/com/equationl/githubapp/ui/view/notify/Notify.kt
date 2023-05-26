@@ -33,6 +33,7 @@ import com.equationl.githubapp.ui.common.BaseEvent
 import com.equationl.githubapp.ui.common.EventChoosePushDialog
 import com.equationl.githubapp.ui.common.TopBar
 import com.equationl.githubapp.ui.view.dynamic.EventRefreshContent
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,7 +48,9 @@ fun NotifyScreen(
         viewModel.viewEvents.collect {
             when (it) {
                 is BaseEvent.ShowMsg -> {
-                    scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                    launch {
+                        scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                    }
                 }
                 is NotifyEvent.Goto -> {
                     navHostController.navigate(it.route)
@@ -80,28 +83,23 @@ fun NotifyScreen(
         }
     ) {
         Column(modifier = Modifier.padding(it)) {
-            if (viewState.notifyFlow == null) {
-                Text(text = "need init")
-            }
-            else {
-                NotifyContent(
-                    navHostController = navHostController,
-                    eventPagingItems = viewState.notifyFlow.collectAsLazyPagingItems(),
-                    onLoadError = { msg ->
-                        viewModel.dispatch(BaseAction.ShowMag(msg))
-                    },
-                    onClickItem = { uiModel ->
-                        viewModel.dispatch(NotifyAction.ClickItem(uiModel))
-                    },
-                    headerItem = {
-                        item(key = "Header") {
-                            HeaderTab(currentTab = viewState.requestFilter) { filter ->
-                                viewModel.dispatch(NotifyAction.ApplyFilter(filter))
-                            }
+            NotifyContent(
+                navHostController = navHostController,
+                eventPagingItems = viewState.notifyFlow?.collectAsLazyPagingItems(),
+                onLoadError = { msg ->
+                    viewModel.dispatch(BaseAction.ShowMag(msg))
+                },
+                onClickItem = { uiModel ->
+                    viewModel.dispatch(NotifyAction.ClickItem(uiModel))
+                },
+                headerItem = {
+                    item(key = "Header") {
+                        HeaderTab(currentTab = viewState.requestFilter) { filter ->
+                            viewModel.dispatch(NotifyAction.ApplyFilter(filter))
                         }
                     }
-                )
-            }
+                }
+            )
         }
 
         if (viewState.showChoosePushDialog) {
@@ -115,13 +113,20 @@ fun NotifyScreen(
 @Composable
 private fun NotifyContent(
     navHostController: NavHostController,
-    eventPagingItems: LazyPagingItems<EventUIModel>,
+    eventPagingItems: LazyPagingItems<EventUIModel>?,
     onLoadError: (msg: String) -> Unit,
     onClickItem: (eventUiModel: EventUIModel) -> Unit,
     headerItem: (LazyListScope.() -> Unit)? = null,
     onRefresh: (() -> Unit)? = null
 ) {
-    EventRefreshContent(navHostController, eventPagingItems, onLoadError, onClickItem, headerItem, onRefresh)
+    EventRefreshContent(
+        navHostController,
+        eventPagingItems,
+        null,
+        onLoadError,
+        onClickItem,
+        headerItem, onRefresh
+    )
 }
 
 @Composable

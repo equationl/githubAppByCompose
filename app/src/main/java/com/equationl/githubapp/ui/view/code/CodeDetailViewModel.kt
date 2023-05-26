@@ -1,6 +1,7 @@
 package com.equationl.githubapp.ui.view.code
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -28,10 +29,13 @@ class CodeDetailViewModel @Inject constructor(
     var viewStates by mutableStateOf(CodeDetailState())
         private set
 
-    override val exception: CoroutineExceptionHandler
-        get() = super.exception.apply {
+    override val exception: CoroutineExceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        viewModelScope.launch {
+            Log.e("CodeDetailViewModel", "Request Error: ", throwable)
             viewStates = viewStates.copy(htmlContent = "<h1>该文件不支持预览</h1>")
+            _viewEvents.send(BaseEvent.ShowMsg("错误："+throwable.message))
         }
+    }
 
     override fun dispatch(action: BaseAction) {
         super.dispatch(action)
@@ -77,6 +81,7 @@ class CodeDetailViewModel @Inject constructor(
         if (response.isSuccessful) {
             val body = response.body()
             if (body == null) {
+                viewStates = viewStates.copy(htmlContent = "<h1>该文件为空</h1>")
                 _viewEvents.trySend(BaseEvent.ShowMsg("body is null!"))
             }
             else {
@@ -85,13 +90,14 @@ class CodeDetailViewModel @Inject constructor(
             }
         }
         else {
+            viewStates = viewStates.copy(htmlContent = "<h1>该文件不支持预览</h1>")
             _viewEvents.send(BaseEvent.ShowMsg("获取失败：${response.errorBody()?.string()}"))
         }
     }
 }
 
 data class CodeDetailState (
-    val htmlContent: String = "loading"
+    val htmlContent: String? = null
 )
 
 sealed class CodeDetailAction: BaseAction() {

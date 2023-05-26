@@ -1,10 +1,13 @@
 package com.equationl.githubapp.ui.view.person
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
+import com.equationl.githubapp.common.database.CacheDB
+import com.equationl.githubapp.common.database.DBUserInfo
 import com.equationl.githubapp.common.utlis.CommonUtils
 import com.equationl.githubapp.common.utlis.browse
 import com.equationl.githubapp.common.utlis.copy
@@ -12,7 +15,7 @@ import com.equationl.githubapp.common.utlis.share
 import com.equationl.githubapp.model.bean.User
 import com.equationl.githubapp.service.RepoService
 import com.equationl.githubapp.service.UserService
-import com.equationl.githubapp.ui.view.dynamic.DynamicViewEvent
+import com.equationl.githubapp.ui.common.BaseEvent
 import com.equationl.githubapp.ui.view.dynamic.DynamicViewModel
 import com.equationl.githubapp.util.datastore.DataKey
 import com.equationl.githubapp.util.datastore.DataStoreUtils
@@ -26,7 +29,8 @@ import javax.inject.Inject
 class PersonViewModel @Inject constructor(
     private val repoService: RepoService,
     private val userService: UserService,
-): DynamicViewModel(userService) {
+    private val dataBase: CacheDB
+): DynamicViewModel(userService, dataBase) {
     override val isGetUserEvent = true
 
     var personViewState by mutableStateOf(PersonViewState(userInfo ?: User()))
@@ -48,7 +52,7 @@ class PersonViewModel @Inject constructor(
             }
             1 -> { // 复制链接
                 context.copy(realUrl)
-                _viewEvents.trySend(DynamicViewEvent.ShowMsg("已复制"))
+                _viewEvents.trySend(BaseEvent.ShowMsg("已复制"))
             }
             2 -> { // 分享
                 context.share(realUrl)
@@ -57,7 +61,16 @@ class PersonViewModel @Inject constructor(
     }
 
     private fun getUser(user: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(exception) {
+            val cacheData = dataBase.cacheDB().queryUserInfo(user)
+            if (!cacheData.isNullOrEmpty()) {
+                val body = cacheData[0].data?.fromJson<User>()
+                if (body != null) {
+                    Log.i("el", "getUser: 使用缓存数据")
+                    personViewState = personViewState.copy(user = body)
+                }
+            }
+
             val saveUserInfo: User? = DataStoreUtils.getSyncData(DataKey.UserInfo, "").fromJson()
 
             personViewState = personViewState.copy(user = User())
@@ -85,18 +98,27 @@ class PersonViewModel @Inject constructor(
                     if (isLoginUser) { // 登录用户则保存一下
                         DataStoreUtils.saveSyncStringData(DataKey.UserInfo, newUser.toJson())
                     }
+
+                    dataBase.cacheDB().insertUserInfo(
+                        DBUserInfo(
+                            user,
+                            user,
+                            newUser.toJson()
+                        )
+                    )
+
                     personViewState = personViewState.copy(user = newUser)
                 }
             }
             else {
                 val errorText = response.errorBody()?.string()
-                _viewEvents.trySend(DynamicViewEvent.ShowMsg(errorText ?: "获取用户信息失败"))
+                _viewEvents.trySend(BaseEvent.ShowMsg(errorText ?: "获取用户信息失败"))
             }
         }
     }
 
     private fun changeFollowState() {
-        viewModelScope.launch {
+        viewModelScope.launch(exception) {
             val isFollow = personViewState.isFollow != IsFollow.Followed
 
             val response = if (isFollow) userService.followUser(personViewState.user.login ?: "") else userService.unfollowUser(personViewState.user.login ?: "")
@@ -105,10 +127,10 @@ class PersonViewModel @Inject constructor(
 
             if (response.isSuccessful) {
                 personViewState = personViewState.copy(isFollow = if (isFollow) IsFollow.Followed else IsFollow.Unfollow)
-                _viewEvents.trySend(DynamicViewEvent.ShowMsg("$text 成功"))
+                _viewEvents.trySend(BaseEvent.ShowMsg("$text 成功"))
             }
             else {
-                _viewEvents.trySend(DynamicViewEvent.ShowMsg("$text 失败, ${response.code()}"))
+                _viewEvents.trySend(BaseEvent.ShowMsg("$text 失败, ${response.code()}"))
             }
         }
     }

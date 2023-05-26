@@ -39,8 +39,14 @@ import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.equationl.githubapp.R
 import com.equationl.githubapp.common.route.Route
+import com.equationl.githubapp.common.utlis.getImageLoader
 import com.equationl.githubapp.model.ui.FileUIModel
 import com.equationl.githubapp.model.ui.ReposUIModel
 import com.ireward.htmlcompose.HtmlText
@@ -49,11 +55,12 @@ import com.ireward.htmlcompose.HtmlText
 fun VerticalIconText(
     icon: ImageVector,
     text: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isPrimary: Boolean = false
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier) {
-        Icon(imageVector = icon, contentDescription = text)
-        Text(text = text)
+        Icon(imageVector = icon, contentDescription = text, tint = if (isPrimary) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary)
+        Text(text = text, color = if (isPrimary) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary)
     }
 }
 
@@ -86,6 +93,7 @@ fun FileItem(
 @Composable
 fun RepoItem(
     data: ReposUIModel,
+    isRefresh: Boolean,
     navController: NavHostController,
     onClick: () -> Unit
 ) {
@@ -102,7 +110,8 @@ fun RepoItem(
                     AvatarContent(
                         data = data.ownerPic,
                         navHostController = navController,
-                        userName = data.ownerName
+                        userName = data.ownerName,
+                        isRefresh = isRefresh
                     )
 
                     Column(
@@ -111,29 +120,31 @@ fun RepoItem(
                         Text(
                             text = data.repositoryName,
                             fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.comPlaceholder(isRefresh)
                         )
                         Row {
-                            Icon(imageVector = Icons.Filled.Person, contentDescription = null)
-                            Text(text = data.ownerName)
+                            Icon(imageVector = Icons.Filled.Person, contentDescription = null, modifier = Modifier.comPlaceholder(isRefresh))
+                            Text(text = data.ownerName, modifier = Modifier.comPlaceholder(isRefresh))
                         }
                     }
                 }
 
-                Text(text = data.repositoryType)
+                Text(text = data.repositoryType, modifier = Modifier.comPlaceholder(isRefresh))
             }
 
             HtmlText(
-                text = data.repositoryDes
+                text = data.repositoryDes,
+                modifier = Modifier.comPlaceholder(isRefresh)
             )
 
             Row(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                VerticalIconText(icon = Icons.Filled.StarBorder, text = data.repositoryStar)
-                VerticalIconText(icon = Icons.Filled.Share, text = data.repositoryFork)
-                VerticalIconText(icon = Icons.Filled.Visibility, text = data.repositoryWatch)
+                VerticalIconText(icon = Icons.Filled.StarBorder, text = data.repositoryStar, modifier = Modifier.comPlaceholder(isRefresh))
+                VerticalIconText(icon = Icons.Filled.Share, text = data.repositoryFork, modifier = Modifier.comPlaceholder(isRefresh))
+                VerticalIconText(icon = Icons.Filled.Visibility, text = data.repositoryWatch, modifier = Modifier.comPlaceholder(isRefresh))
             }
         }
     }
@@ -144,6 +155,7 @@ fun AvatarContent(
     data: Any,
     modifier: Modifier = Modifier,
     size: DpSize = DpSize(30.dp, 30.dp),
+    isRefresh: Boolean? = null,
     isCircle: Boolean = true,
     navHostController: NavHostController? = null,
     userName: String? = null,
@@ -161,6 +173,10 @@ fun AvatarContent(
         realModifier.clickable(onClick = onClick)
     }
 
+    if (isRefresh != null) {
+        realModifier = realModifier.comPlaceholder(isRefresh)
+    }
+
     AsyncImage(
         model = ImageRequest.Builder(LocalContext.current)
             .data(data)
@@ -169,7 +185,8 @@ fun AvatarContent(
             .memoryCachePolicy(CachePolicy.ENABLED)
             .build(),
         contentDescription = "avatar",
-        modifier = realModifier
+        modifier = realModifier,
+        imageLoader = LocalContext.current.getImageLoader()
     )
 }
 
@@ -202,16 +219,45 @@ fun CheckBoxGroup(
 }
 
 @Composable
-fun EmptyItem(isNotInit: Boolean = false) {
+fun EmptyItem(
+    isNotInit: Boolean = false,
+    text: String? = null
+) {
     if (isNotInit) {
         Text(text = "暂时没有任何数据哦~~")
     }
     else {
-        Text(text = "暂时没有任何数据哦～")
+        Column(
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.no_result))
+            val progress by animateLottieCompositionAsState(composition, iterations = LottieConstants.IterateForever)
+            LottieAnimation(
+                composition = composition,
+                progress = { progress },
+                modifier = Modifier.size(200.dp)
+            )
+
+            Text(text = if (text.isNullOrEmpty()) "暂时没有任何数据哦" else text)
+        }
     }
 }
 
 @Composable
-fun LoadItem() {
-    Text(text = "加载中……")
+fun LoadItem(text: String? = null) {
+    Column(
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.loading))
+        val progress by animateLottieCompositionAsState(composition, iterations = LottieConstants.IterateForever)
+        LottieAnimation(
+            composition = composition,
+            progress = { progress },
+        )
+
+        Text(text = if (text.isNullOrEmpty()) "加载中……" else text)
+    }
 }

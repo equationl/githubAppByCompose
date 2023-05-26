@@ -3,17 +3,22 @@ package com.equationl.githubapp.model.paging
 import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import com.equationl.githubapp.common.database.CacheDB
+import com.equationl.githubapp.common.database.DBRepositoryEvent
 import com.equationl.githubapp.common.net.PageInfo
 import com.equationl.githubapp.model.conversion.EventConversion
 import com.equationl.githubapp.model.ui.EventUIModel
 import com.equationl.githubapp.service.RepoService
 import com.equationl.githubapp.util.fromJson
+import com.equationl.githubapp.util.toJson
 import retrofit2.HttpException
 
 class RepoDynamicPagingSource(
     private val repoService: RepoService,
     private val userName: String,
-    private val repoName: String
+    private val repoName: String,
+    private val dataBase: CacheDB,
+    private val onLoadFirstPagSuccess: () -> Unit
 ): PagingSource<Int, EventUIModel>() {
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, EventUIModel> {
@@ -33,6 +38,19 @@ class RepoDynamicPagingSource(
             Log.i("el", "load: 总页数 = $totalPage")
 
             val uiEventModel = response.body()?.map { EventConversion.eventToEventUIModel(it) }
+
+            if (nextPageNumber == 1) {
+                dataBase.cacheDB().insertRepositoryEvent(
+                    DBRepositoryEvent(
+                        "$userName/$repoName",
+                        "$userName/$repoName",
+                        response.body()?.toJson()
+                    )
+                )
+                if (!uiEventModel.isNullOrEmpty()) {
+                    onLoadFirstPagSuccess()
+                }
+            }
 
             return LoadResult.Page(
                 data = uiEventModel ?: listOf(),

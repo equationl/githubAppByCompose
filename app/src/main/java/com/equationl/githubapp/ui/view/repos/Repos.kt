@@ -90,7 +90,9 @@ fun RepoDetailScreen(
         viewModel.viewEvents.collect {
             when (it) {
                 is BaseEvent.ShowMsg -> {
-                    scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                    launch {
+                        scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                    }
                 }
                 is ReposViewEvent.Goto -> {
                     navController.navigate(it.route)

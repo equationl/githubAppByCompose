@@ -22,6 +22,7 @@ import com.equationl.githubapp.model.ui.FileUIModel
 import com.equationl.githubapp.ui.common.BaseEvent
 import com.equationl.githubapp.ui.common.BaseRefresh
 import com.equationl.githubapp.ui.common.FileItem
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,7 +39,9 @@ fun ReposFileContent(
         viewModel.viewEvents.collect {
             when (it) {
                 is BaseEvent.ShowMsg -> {
-                    scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                    launch {
+                        scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                    }
                 }
                 is RepoFileEvent.Refresh -> {
                     viewModel.dispatch(RepoFileAction.LoadData(repoName, userName))

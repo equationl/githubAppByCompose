@@ -13,6 +13,7 @@ import androidx.navigation.NavHostController
 import com.equationl.githubapp.common.constant.LanguageFilter
 import com.equationl.githubapp.common.route.Route
 import com.equationl.githubapp.model.ui.ReposUIModel
+import com.equationl.githubapp.ui.common.BaseEvent
 import com.equationl.githubapp.ui.common.BaseRefresh
 import com.equationl.githubapp.ui.common.RepoItem
 import kotlinx.coroutines.launch
@@ -29,7 +30,7 @@ fun RecommendContent(
     LaunchedEffect(Unit) {
         viewModel.viewEvents.collect {
             when (it) {
-                is RecommendEvent.ShowMsg -> {
+                is BaseEvent.ShowMsg -> {
                     launch {
                         scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
                     }
@@ -39,7 +40,7 @@ fun RecommendContent(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.dispatch(RecommendAction.RefreshData)
+        viewModel.dispatch(RecommendAction.RefreshData(false))
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -53,9 +54,10 @@ fun RecommendContent(
         RecommendRefreshContent(
             isRefreshing = viewState.isRefreshing,
             dataList = viewState.dataList,
+            cacheList = viewState.cacheDataList,
             navController = navController
         ) {
-            viewModel.dispatch(RecommendAction.RefreshData)
+            viewModel.dispatch(RecommendAction.RefreshData(true))
         }
     }
 }
@@ -131,14 +133,16 @@ private fun RecommendRefreshContent(
     isRefreshing: Boolean,
     dataList: List<ReposUIModel>,
     navController: NavHostController,
+    cacheList: List<ReposUIModel>? = null,
     onRefresh: () -> Unit
 ) {
 
     BaseRefresh(
         isRefresh = isRefreshing,
         itemList = dataList,
+        cacheItemList = cacheList,
         itemUi = {
-            RepoItem(it, navController) {
+            RepoItem(it, isRefreshing, navController) {
                 navController.navigate("${Route.REPO_DETAIL}/${it.repositoryName}/${it.ownerName}")
             }
         },

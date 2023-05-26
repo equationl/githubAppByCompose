@@ -135,7 +135,7 @@ fun PersonContent(
 
         viewModel.viewEvents.collect {
             when (it) {
-                is DynamicViewEvent.ShowMsg -> {
+                is BaseEvent.ShowMsg -> {
                     launch {
                         scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
                     }
@@ -190,7 +190,9 @@ private fun OrgMember(
         userListViewModel.viewEvents.collect {
             when (it) {
                 is BaseEvent.ShowMsg -> {
-                    scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                    launch {
+                        scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                    }
                 }
             }
         }
@@ -200,6 +202,8 @@ private fun OrgMember(
 
     UserListContent(
         userPagingItems = userList,
+        cacheUserList = userListState.cacheUserList,
+        isInit = userListViewModel.isInit,
         onLoadError = { msg ->
             userListViewModel.dispatch(BaseAction.ShowMag(msg))
         },
@@ -229,35 +233,36 @@ private fun PersonDynamic(
     val personViewState = viewModel.personViewState
     val viewState = viewModel.viewStates
 
-    if (viewState.dynamicFlow == null) {
-        Text(text = "Need init")
+    val dynamicList = viewState.dynamicFlow?.collectAsLazyPagingItems()
+
+    if (dynamicList?.itemCount == 0 && viewModel.isInit && viewState.cacheList.isNullOrEmpty()) {
+        return
     }
-    else {
-        val dynamicList = viewState.dynamicFlow.collectAsLazyPagingItems()
-        EventRefreshContent(
-            navHostController = navController,
-            eventPagingItems = dynamicList,
-            onLoadError = {
-                viewModel.dispatch(DynamicViewAction.ShowMsg(it))
-            },
-            onClickItem = {
-                viewModel.dispatch(DynamicViewAction.ClickItem(it))
-            },
-            headerItem = {
-                item(key = "header") {
-                    PersonHeader(
-                        user = personViewState.user,
-                        navController = navController,
-                        isLoginUser = isLoginUser,
-                        onEnablePagerScroll = onEnablePagerScroll,
-                    )
-                }
-            },
-            onRefresh = {
-                viewModel.dispatch(PersonAction.GetUser(personViewState.user.login ?: ""))
+
+    EventRefreshContent(
+        navHostController = navController,
+        eventPagingItems = dynamicList,
+        cacheList = viewState.cacheList,
+        onLoadError = {
+            viewModel.dispatch(DynamicViewAction.ShowMsg(it))
+        },
+        onClickItem = {
+            viewModel.dispatch(DynamicViewAction.ClickItem(it))
+        },
+        headerItem = {
+            item(key = "header") {
+                PersonHeader(
+                    user = personViewState.user,
+                    navController = navController,
+                    isLoginUser = isLoginUser,
+                    onEnablePagerScroll = onEnablePagerScroll,
+                )
             }
-        )
-    }
+        },
+        onRefresh = {
+            viewModel.dispatch(PersonAction.GetUser(personViewState.user.login ?: ""))
+        }
+    )
 }
 
 @Composable

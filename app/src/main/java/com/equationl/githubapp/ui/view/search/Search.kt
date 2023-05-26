@@ -61,6 +61,7 @@ import com.equationl.githubapp.ui.view.list.generalUser.UserListContent
 import com.vanpra.composematerialdialogs.MaterialDialog
 import com.vanpra.composematerialdialogs.MaterialDialogState
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,7 +77,9 @@ fun SearchScreen(
         viewModel.viewEvents.collect {
             when (it) {
                 is BaseEvent.ShowMsg -> {
-                    scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                    launch {
+                        scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                    }
                 }
             }
         }
@@ -148,6 +151,8 @@ fun SearchContent(
                 GeneralRepoListContent(
                     navHostController = navHostController,
                     repoPagingItems = repoPagingItems,
+                    cacheRepoList = null,
+                    isInit = false,
                     onLoadError = {
                         viewModel.dispatch(BaseAction.ShowMag(it))
                     },
@@ -162,6 +167,8 @@ fun SearchContent(
 
                 UserListContent(
                     userPagingItems = userPagingItems,
+                    cacheUserList = null,
+                    isInit = false,
                     onLoadError = {
                         viewModel.dispatch(BaseAction.ShowMag(it))
                     },

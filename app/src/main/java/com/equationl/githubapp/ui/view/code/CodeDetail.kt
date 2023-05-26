@@ -1,5 +1,6 @@
 package com.equationl.githubapp.ui.view.code
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -19,14 +20,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.equationl.githubapp.ui.common.BaseEvent
 import com.equationl.githubapp.ui.common.CustomWebView
+import com.equationl.githubapp.ui.common.LoadItem
 import com.equationl.githubapp.ui.common.MoreMenu
 import com.equationl.githubapp.ui.common.TopBar
+import kotlinx.coroutines.launch
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,7 +55,9 @@ fun CodeDetailScreen(
         viewModel.viewEvents.collect {
             when (it) {
                 is BaseEvent.ShowMsg -> {
-                    scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                    launch {
+                        scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                    }
                 }
             }
         }
@@ -114,22 +120,33 @@ fun CodeDetailScreen(
 
 @Composable
 private fun CodeDetailContent(
-    codeHtml: String,
+    codeHtml: String?,
     navController: NavHostController
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
-        CustomWebView(
-            url = "",
-            htmlContent = codeHtml,
-            onBack = {
-                if (it?.canGoBack() == true) {
-                    it.goBack()
-                }
-                else {
-                    navController.popBackStack()
-                }
+        if (codeHtml == null) {
+            Column(
+                Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                LoadItem()
             }
-        )
+        }
+        else {
+            CustomWebView(
+                url = "",
+                htmlContent = codeHtml,
+                onBack = {
+                    if (it?.canGoBack() == true) {
+                        it.goBack()
+                    }
+                    else {
+                        navController.popBackStack()
+                    }
+                }
+            )
+        }
     }
 }
 

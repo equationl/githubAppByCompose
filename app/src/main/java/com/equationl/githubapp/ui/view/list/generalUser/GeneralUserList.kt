@@ -35,7 +35,9 @@ import com.equationl.githubapp.ui.common.BaseAction
 import com.equationl.githubapp.ui.common.BaseEvent
 import com.equationl.githubapp.ui.common.BaseRefreshPaging
 import com.equationl.githubapp.ui.common.TopBar
+import com.equationl.githubapp.ui.common.comPlaceholder
 import com.equationl.githubapp.ui.view.list.GeneralListEnum
+import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,7 +56,9 @@ fun GeneralUserListScreen(
         viewModel.viewEvents.collect {
             when (it) {
                 is BaseEvent.ShowMsg -> {
-                    scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                    launch {
+                        scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                    }
                 }
             }
         }
@@ -92,6 +96,8 @@ fun GeneralUserListScreen(
         Column(modifier = Modifier.padding(it)) {
             UserListContent(
                 userPagingItems = userList,
+                viewState.cacheUserList,
+                isInit = viewModel.isInit,
                 onLoadError = { msg ->
                     viewModel.dispatch(BaseAction.ShowMag(msg))
                 },
@@ -106,15 +112,22 @@ fun GeneralUserListScreen(
 @Composable
 fun UserListContent(
     userPagingItems: LazyPagingItems<UserUIModel>?,
+    cacheUserList: List<UserUIModel>?,
+    isInit: Boolean,
     onLoadError: (msg: String) -> Unit,
     onClickItem: (userUiModel: UserUIModel) -> Unit,
     headerItem: (LazyListScope.() -> Unit)? = null,
     onRefresh: (() -> Unit)? = null
 ) {
+    if (userPagingItems?.itemCount == 0 && isInit && cacheUserList.isNullOrEmpty()) {
+        return
+    }
+
     BaseRefreshPaging(
         pagingItems = userPagingItems,
-        itemUi = { userUIModel ->
-            UserItem(userUiModel = userUIModel) {
+        cacheItems = cacheUserList,
+        itemUi = { userUIModel, isRefresh ->
+            UserItem(userUiModel = userUIModel, isRefresh = isRefresh) {
                 onClickItem(it)
             }
         },
@@ -129,6 +142,7 @@ fun UserListContent(
 @Composable
 private fun UserItem(
     userUiModel: UserUIModel,
+    isRefresh: Boolean,
     onClickItem: (user: UserUIModel) -> Unit
 ) {
     Card(
@@ -143,17 +157,19 @@ private fun UserItem(
             AvatarContent(
                 data = userUiModel.avatarUrl ?: "",
                 size = DpSize(35.dp, 35.dp),
-                onClick = { onClickItem(userUiModel) }
+                onClick = { onClickItem(userUiModel) },
+                isRefresh = isRefresh
             )
             Column {
                 Text(
                     text = userUiModel.login ?: "",
                     color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.comPlaceholder(isRefresh)
                 )
                 Row {
-                    Icon(imageVector = Icons.Filled.Person, contentDescription = "person")
-                    Text(text = userUiModel.name ?: "", color = MaterialTheme.colorScheme.secondary)
+                    Icon(imageVector = Icons.Filled.Person, contentDescription = "person", modifier = Modifier.comPlaceholder(isRefresh))
+                    Text(text = userUiModel.name ?: "", color = MaterialTheme.colorScheme.secondary, modifier = Modifier.comPlaceholder(isRefresh))
                 }
             }
         }

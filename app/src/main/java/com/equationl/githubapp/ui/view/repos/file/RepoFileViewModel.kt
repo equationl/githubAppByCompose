@@ -1,6 +1,7 @@
 package com.equationl.githubapp.ui.view.repos.file
 
 import android.net.Uri
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -24,17 +25,18 @@ class RepoFileViewModel @Inject constructor(
     private val repoService: RepoService
 ): BaseViewModel() {
 
-    override val exception: CoroutineExceptionHandler
-        get() = super.exception.apply {
+    override val exception= CoroutineExceptionHandler { _, throwable ->
+        viewModelScope.launch {
+            Log.e("RepoFileViewModel", "Request Error: ", throwable)
+            _viewEvents.send(BaseEvent.ShowMsg("错误："+throwable.message))
             viewStates = viewStates.copy(isRefresh = false)
         }
+    }
 
     var viewStates by mutableStateOf(RepoFileState())
         private set
 
-    public override fun dispatch(action: BaseAction) {
-        super.dispatch(action)
-
+    fun dispatch(action: RepoFileAction) {
         when (action) {
             is RepoFileAction.LoadData -> loadData(action.repoName, action.userName)
             is RepoFileAction.OnClickFile -> onClickFile(action.fileUIModel, action.userName, action.repoName)
@@ -102,13 +104,12 @@ class RepoFileViewModel @Inject constructor(
     private fun onClickPath(pos: Int) {
         if (viewStates.isRefresh) return
 
-        if (pos == 0) {
-            viewStates = viewStates.copy(pathList = listOf("."))
-        }
-        else {
+        viewStates = if (pos == 0) {
+            viewStates.copy(pathList = listOf("."))
+        } else {
             val newList = mutableListOf<String>()
             newList.addAll(viewStates.pathList.subList(0, pos + 1))
-            viewStates = viewStates.copy(pathList = newList)
+            viewStates.copy(pathList = newList)
         }
 
         _viewEvents.trySend(RepoFileEvent.Refresh)

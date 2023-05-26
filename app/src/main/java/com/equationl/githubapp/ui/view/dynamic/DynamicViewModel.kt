@@ -1,34 +1,40 @@
 package com.equationl.githubapp.ui.view.dynamic
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.equationl.githubapp.common.config.AppConfig
+import com.equationl.githubapp.common.database.CacheDB
 import com.equationl.githubapp.common.route.Route
+import com.equationl.githubapp.model.bean.Event
 import com.equationl.githubapp.model.bean.User
+import com.equationl.githubapp.model.conversion.EventConversion
 import com.equationl.githubapp.model.paging.DynamicPagingSource
 import com.equationl.githubapp.model.ui.EventUIAction
 import com.equationl.githubapp.model.ui.EventUIModel
 import com.equationl.githubapp.service.UserService
+import com.equationl.githubapp.ui.common.BaseAction
+import com.equationl.githubapp.ui.common.BaseEvent
+import com.equationl.githubapp.ui.common.BaseViewModel
 import com.equationl.githubapp.util.datastore.DataKey
 import com.equationl.githubapp.util.datastore.DataStoreUtils
 import com.equationl.githubapp.util.fromJson
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 open class DynamicViewModel @Inject constructor(
     private val userService: UserService,
-) : ViewModel() {
+    private val dataBase: CacheDB
+) : BaseViewModel() {
 
     protected open val isGetUserEvent: Boolean  = false
 
@@ -37,25 +43,37 @@ open class DynamicViewModel @Inject constructor(
     var viewStates by mutableStateOf(DynamicViewState())
         private set
 
-    protected val _viewEvents = Channel<DynamicViewEvent>(Channel.BUFFERED)
-    val viewEvents = _viewEvents.receiveAsFlow()
-
     fun dispatch(action: DynamicViewAction) {
         when (action) {
-            is DynamicViewAction.ShowMsg -> { _viewEvents.trySend(DynamicViewEvent.ShowMsg(action.msg)) }
+            is DynamicViewAction.ShowMsg -> { _viewEvents.trySend(BaseEvent.ShowMsg(action.msg)) }
             is DynamicViewAction.ClickItem -> clickItem(action.eventUIModel)
             is DynamicViewAction.SetData -> setData(action.userName)
         }
     }
 
     private fun setData(userName: String) {
-        val dynamicFlow =
-            Pager(
-                PagingConfig(pageSize = AppConfig.PAGE_SIZE, initialLoadSize = AppConfig.PAGE_SIZE)
-            ) {
-                DynamicPagingSource(userService, userName, isGetUserEvent)
-            }.flow.cachedIn(viewModelScope)
-        viewStates = viewStates.copy(dynamicFlow = dynamicFlow)
+        if (isInit) return
+        viewModelScope.launch(exception) {
+            val cacheData = if (isGetUserEvent) dataBase.cacheDB().queryUserEvent(userName) else dataBase.cacheDB().queryReceiveEvent()
+            if (!cacheData.isNullOrEmpty()) {
+                val body = cacheData[0].data?.fromJson<List<Event>>()
+                if (body != null) {
+                    Log.i("el", "setData: 使用缓存数据")
+                    viewStates = viewStates.copy(cacheList = body.map { EventConversion.eventToEventUIModel(it) })
+                }
+            }
+
+            val dynamicFlow =
+                Pager(
+                    PagingConfig(pageSize = AppConfig.PAGE_SIZE, initialLoadSize = AppConfig.PAGE_SIZE)
+                ) {
+                    DynamicPagingSource(userService, userName, isGetUserEvent, dataBase) {
+                        viewStates = viewStates.copy(cacheList = null)
+                        isInit = true
+                    }
+                }.flow.cachedIn(viewModelScope)
+            viewStates = viewStates.copy(dynamicFlow = dynamicFlow)
+        }
     }
 
     private fun clickItem(eventUIModel: EventUIModel) {
@@ -100,7 +118,7 @@ open class DynamicViewModel @Inject constructor(
             }
             EventUIAction.Release -> {
                 // TODO
-                _viewEvents.trySend(DynamicViewEvent.ShowMsg("Click A Release Item!"))
+                _viewEvents.trySend(BaseEvent.ShowMsg("Click A Release Item!"))
             }
         }
     }
@@ -108,17 +126,17 @@ open class DynamicViewModel @Inject constructor(
 
 data class DynamicViewState(
     val dynamicFlow: Flow<PagingData<EventUIModel>>? = null,
+    val cacheList: List<EventUIModel>? = null,
     val showChoosePushDialog: Boolean = false,
     val pushShaList: List<String> = listOf(),
     val pushShaDesList: List<String> = listOf()
 )
 
-sealed class DynamicViewEvent {
-    data class ShowMsg(val msg: String): DynamicViewEvent()
+sealed class DynamicViewEvent: BaseEvent() {
     data class Goto(val route: String): DynamicViewEvent()
 }
 
-sealed class DynamicViewAction {
+sealed class DynamicViewAction: BaseAction() {
     data class ShowMsg(val msg: String): DynamicViewAction()
     data class ClickItem(val eventUIModel: EventUIModel): DynamicViewAction()
     data class SetData(val userName: String): DynamicViewAction()

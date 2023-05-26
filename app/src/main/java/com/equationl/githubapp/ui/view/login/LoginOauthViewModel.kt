@@ -1,6 +1,9 @@
 package com.equationl.githubapp.ui.view.login
 
 import android.util.Log
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.equationl.githubapp.BuildConfig
@@ -28,6 +31,9 @@ class LoginOauthViewModel @Inject constructor(
     private val repoService: RepoService
 ) : ViewModel() {
 
+    var viewStates by mutableStateOf(LoginOAuthState())
+        private set
+
     private val _viewEvents = Channel<LoginOauthViewEvent>(Channel.BUFFERED)
     val viewEvents = _viewEvents.receiveAsFlow()
 
@@ -44,7 +50,10 @@ class LoginOauthViewModel @Inject constructor(
             webViewLoadError("错误："+throwable.message)
         }
 
+        if (viewStates.isRequestToken) return
+
         viewModelScope.launch(exception) {
+            viewStates = viewStates.copy(isRequestToken = true)
             val response = loginService.authorizationsCode(
                 client_id = BuildConfig.CLIENT_ID,
                 client_secret = BuildConfig.CLIENT_SECRET,
@@ -99,6 +108,10 @@ class LoginOauthViewModel @Inject constructor(
         }
     }
 }
+
+data class LoginOAuthState(
+    val isRequestToken: Boolean = false
+)
 
 sealed class LoginOauthViewEvent {
     data class Goto(val route: String):LoginOauthViewEvent()

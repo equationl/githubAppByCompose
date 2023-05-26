@@ -64,6 +64,7 @@ class ReposViewModel @Inject constructor(
     }
 
     private fun getRepoState(userName: String, repoName: String) {
+        if (isInit) return
         viewModelScope.launch(exception) {
             val starResponse = repoService.checkRepoStarred(userName, repoName)
             val watchResponse = repoService.checkRepoWatched(userName, repoName)
@@ -71,6 +72,8 @@ class ReposViewModel @Inject constructor(
             val isWatch = watchResponse.code() != 404
 
             viewStates = viewStates.copy(isWatch = isWatch, isStar = isStar)
+
+            isInit = true
         }
     }
 

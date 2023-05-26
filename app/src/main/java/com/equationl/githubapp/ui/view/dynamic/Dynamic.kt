@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -16,11 +17,16 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.equationl.githubapp.model.bean.User
 import com.equationl.githubapp.model.ui.EventUIModel
 import com.equationl.githubapp.ui.common.AvatarContent
+import com.equationl.githubapp.ui.common.BaseEvent
 import com.equationl.githubapp.ui.common.BaseRefreshPaging
 import com.equationl.githubapp.ui.common.EventChoosePushDialog
+import com.equationl.githubapp.ui.common.comPlaceholder
 import com.equationl.githubapp.util.datastore.DataKey
 import com.equationl.githubapp.util.datastore.DataStoreUtils
 import com.equationl.githubapp.util.fromJson
+import com.halilibo.richtext.markdown.Markdown
+import com.halilibo.richtext.ui.material3.Material3RichText
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,8 +40,10 @@ fun DynamicContent(
     LaunchedEffect(Unit) {
         viewModel.viewEvents.collect {
             when (it) {
-                is DynamicViewEvent.ShowMsg -> {
-                    scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                is BaseEvent.ShowMsg -> {
+                    launch {
+                        scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                    }
                 }
                 is DynamicViewEvent.Goto -> {
                     navController.navigate(it.route)
@@ -50,16 +58,20 @@ fun DynamicContent(
     }
 
     val dynamicList = viewState.dynamicFlow?.collectAsLazyPagingItems()
+    if (dynamicList?.itemCount == 0 && viewModel.isInit && viewState.cacheList.isNullOrEmpty()) {
+        return
+    }
 
     EventRefreshContent(
         navHostController = navController,
         eventPagingItems = dynamicList,
+        cacheList = viewState.cacheList,
         onLoadError = {
             viewModel.dispatch(DynamicViewAction.ShowMsg(it))
         },
         onClickItem = {
             viewModel.dispatch(DynamicViewAction.ClickItem(it))
-        }
+        },
     )
 
     if (viewState.showChoosePushDialog) {
@@ -73,6 +85,7 @@ fun DynamicContent(
 fun EventRefreshContent(
     navHostController: NavHostController,
     eventPagingItems: LazyPagingItems<EventUIModel>?,
+    cacheList: List<EventUIModel>? = null,
     onLoadError: (msg: String) -> Unit,
     onClickItem: (eventUiModel: EventUIModel) -> Unit,
     headerItem: (LazyListScope.() -> Unit)? = null,
@@ -80,17 +93,19 @@ fun EventRefreshContent(
 ) {
     BaseRefreshPaging(
         pagingItems = eventPagingItems,
-        itemUi = {
+        cacheItems = cacheList,
+        itemUi = {data, isRefresh ->
             Column(modifier = Modifier.padding(8.dp)) {
                 EventItem(
-                    it.image,
-                    it.username,
-                    it.time,
-                    it.action,
-                    it.des,
+                    data.image,
+                    data.username,
+                    data.time,
+                    data.action,
+                    data.des,
+                    isRefresh,
                     navHostController
                 ) {
-                    onClickItem(it)
+                    onClickItem(data)
                 }
             }
         },
@@ -109,6 +124,7 @@ private fun EventItem(
     timeText: String,
     action: String,
     des: String,
+    isRefresh: Boolean,
     navHostController: NavHostController,
     onClick: () -> Unit
 ) {
@@ -124,22 +140,28 @@ private fun EventItem(
                         data = avatarUrl,
                         size = DpSize(50.dp, 50.dp),
                         navHostController = navHostController,
-                        userName = userName
+                        userName = userName,
+                        isRefresh = isRefresh
                     )
 
                     Text(
                         text = userName,
-                        modifier = Modifier.padding(start = 8.dp)
+                        modifier = Modifier.padding(start = 8.dp).comPlaceholder(isRefresh),
+                        fontWeight = FontWeight.Bold
                     )
                 }
 
-                Text(text = timeText)
+                Text(text = timeText, modifier = Modifier.comPlaceholder(isRefresh))
             }
 
-            Text(text = action)
+            Material3RichText(modifier = Modifier.comPlaceholder(isRefresh)) {
+                Markdown(content = action + if (des.isNotBlank()) " : " else "")
+            }
 
             if (des.isNotBlank()) {
-                Text(text = des)
+                Material3RichText(modifier = Modifier.padding(top = 8.dp).comPlaceholder(isRefresh)) {
+                    Markdown(content = des)
+                }
             }
         }
     }

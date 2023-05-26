@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -14,6 +15,7 @@ import androidx.navigation.NavHostController
 import com.equationl.githubapp.BuildConfig
 import com.equationl.githubapp.common.config.AppConfig
 import com.equationl.githubapp.ui.common.CustomWebView
+import com.equationl.githubapp.ui.common.LoadItem
 import com.equationl.githubapp.ui.common.TopBar
 import kotlinx.coroutines.launch
 
@@ -54,7 +56,18 @@ fun OAuthLoginScreen(
         }
     ) {
         Column(modifier = Modifier.padding(it)) {
-            OAuthWebView(viewModel, navHostController)
+            if (viewModel.viewStates.isRequestToken) {
+                Column(
+                    Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    LoadItem("授权成功，正在登录")
+                }
+            }
+            else {
+                OAuthWebView(viewModel, navHostController)
+            }
         }
     }
 }

@@ -109,7 +109,9 @@ fun MainScreen(
                     navController.navigate(it.route)
                 }
                 is BaseEvent.ShowMsg -> {
-                    scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                    launch {
+                        scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                    }
                 }
                 is MainViewEvent.HadUpdate -> {
                     updateContent = it.Content
@@ -129,7 +131,11 @@ fun MainScreen(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.dispatch(MainViewAction.CheckUpdate(false, context))
+        viewModel.dispatch(MainViewAction.CheckUpdate(
+            showTip = false,
+            forceRequest = false,
+            context = context
+        ))
     }
 
     var lastClickTime = remember { 0L }
@@ -223,6 +229,7 @@ private fun MainContent(
     HorizontalPager(
         pageCount = 3,
         state = pagerState,
+        beyondBoundsPageCount = 2,
         userScrollEnabled = gesturesEnabled
     ) { page ->
         when (page) {
@@ -239,7 +246,7 @@ private fun MainContent(
 private fun MainDrawerContent(
     user: User,
     viewModel: MainViewModel,
-    navController: NavHostController,
+    navController: NavHostController
 ) {
     val editDialogState: MaterialDialogState = rememberMaterialDialogState(false)
     val logoutDialogState: MaterialDialogState = rememberMaterialDialogState(false)
@@ -277,7 +284,11 @@ private fun MainDrawerContent(
                 Text(text = "个人信息")
             }
             TextButton(onClick = {
-                viewModel.dispatch(MainViewAction.CheckUpdate(true, context))
+                viewModel.dispatch(MainViewAction.CheckUpdate(
+                    showTip = true,
+                    forceRequest = true,
+                    context = context
+                ))
             }) {
                 Text(text = "版本更新")
             }
@@ -285,6 +296,11 @@ private fun MainDrawerContent(
                 context.browse("https://github.com/equationl/githubAppByCompose")
             }) {
                 Text(text = "应用关于")
+            }
+            TextButton(onClick = {
+                viewModel.dispatch(MainViewAction.ClearCache(context))
+            }) {
+                Text(text = "清除缓存")
             }
             TextButton(onClick = {
                 logoutDialogState.show()

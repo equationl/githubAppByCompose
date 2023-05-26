@@ -3,6 +3,8 @@ package com.equationl.githubapp.model.paging
 import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import com.equationl.githubapp.common.database.CacheDB
+import com.equationl.githubapp.common.database.DBRepositoryIssue
 import com.equationl.githubapp.common.net.PageInfo
 import com.equationl.githubapp.model.bean.Issue
 import com.equationl.githubapp.model.bean.SearchResult
@@ -13,12 +15,15 @@ import com.equationl.githubapp.service.SearchService
 import com.equationl.githubapp.ui.view.repos.issue.IssueState
 import com.equationl.githubapp.ui.view.repos.issue.QueryParameter
 import com.equationl.githubapp.util.fromJson
+import com.equationl.githubapp.util.toJson
 import retrofit2.HttpException
 
 class RepoIssuePagingSource(
     private val issueService: IssueService,
     private val searchService: SearchService,
     private val queryParameter: QueryParameter,
+    private val dataBase: CacheDB,
+    private val onLoadFirstPageSuccess: () -> Unit
 ): PagingSource<Int, IssueUIModel>() {
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, IssueUIModel> {
@@ -49,6 +54,23 @@ class RepoIssuePagingSource(
             } else {
                 val body = (response.body() ?: SearchResult<Issue>()) as SearchResult<Issue>
                 body.items?.map { IssueConversion.issueToIssueUIModel(it) }
+            }
+
+            if (nextPageNumber == 1) { // 缓存数据
+                if (queryParameter.queryString.isBlank()) {
+                    dataBase.cacheDB().insertRepositoryIssue(
+                        DBRepositoryIssue(
+                            "${queryParameter.userName}${queryParameter.repoName}${queryParameter.state.originalName}",
+                            "${queryParameter.userName}/${queryParameter.repoName}",
+                            response.body()?.toJson(),
+                            queryParameter.state.originalName
+                        )
+                    )
+
+                    if (!issueUiModel.isNullOrEmpty()) {
+                        onLoadFirstPageSuccess()
+                    }
+                }
             }
 
             return LoadResult.Page(

@@ -61,8 +61,8 @@ dependencies {
     implementation 'androidx.compose.material3:material3'
     implementation "androidx.compose.ui:ui-tooling"
     implementation "androidx.compose.material:material-icons-extended"
-    implementation 'androidx.activity:activity-compose:1.7.0'
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4"
+    implementation 'androidx.activity:activity-compose:1.7.1'
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version"
     implementation "androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycle_version"
@@ -71,7 +71,7 @@ dependencies {
     implementation "androidx.datastore:datastore-preferences:1.0.0"
     implementation "androidx.datastore:datastore-core:1.0.0"
     implementation "androidx.paging:paging-runtime:3.1.1"
-    implementation "androidx.paging:paging-compose:1.0.0-alpha18"
+    implementation "androidx.paging:paging-compose:1.0.0-alpha19"
     implementation "androidx.constraintlayout:constraintlayout-compose:1.0.1"
     implementation "androidx.room:room-runtime:$room_version"
     implementation "androidx.room:room-ktx:$room_version"
@@ -85,8 +85,9 @@ dependencies {
     implementation "com.google.accompanist:accompanist-swiperefresh:$accompanist_version"
     implementation "com.google.accompanist:accompanist-placeholder-material:$accompanist_version"
     implementation "com.google.accompanist:accompanist-systemuicontroller:$accompanist_version"
+    implementation "com.google.accompanist:accompanist-permissions:$accompanist_version"
 
-    implementation "io.coil-kt:coil-compose:2.3.0"
+    implementation "io.coil-kt:coil-compose:2.4.0"
 
     implementation "com.halilibo.compose-richtext:richtext-commonmark:0.16.0"
     implementation "com.halilibo.compose-richtext:richtext-ui-material3:0.16.0"
@@ -100,8 +101,9 @@ dependencies {
     }
     // implementation 'com.squareup.okhttp3:logging-interceptor:4.9.3'
     implementation "com.airbnb.android:lottie-compose:6.0.0"
-    implementation "io.github.vanpra.compose-material-dialogs:datetime:0.8.1-rc"
-    implementation "io.github.vanpra.compose-material-dialogs:color:0.8.1-rc"
+    implementation "io.github.vanpra.compose-material-dialogs:core:0.9.0"
+    //implementation "io.github.vanpra.compose-material-dialogs:datetime:0.8.1-rc"
+    //implementation "io.github.vanpra.compose-material-dialogs:color:0.8.1-rc"
 
     implementation 'com.github.ireward:compose-html:1.0.2'
 

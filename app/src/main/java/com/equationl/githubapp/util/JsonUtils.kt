@@ -1,17 +1,11 @@
 package com.equationl.githubapp.util
 
-import android.util.Log
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 
-fun Any.toJson(): String {
-    return Gson().toJson(this)
-}
+inline fun <reified T : Any> T.toJson(): String = this.let { Gson().toJson(this, T::class.java) }
 
-inline fun <reified T> String.fromJson(): T? {
-    return try {
-        Gson().fromJson(this, T::class.java)
-    } catch (e: Exception) {
-        Log.w("el, JsonUtil", "fromJson: 转换json失败", e)
-        null
-    }
+inline fun <reified T : Any> String.fromJson(): T? = this.let {
+    val type = object : TypeToken<T>() {}.type
+    Gson().fromJson(this, type)
 }

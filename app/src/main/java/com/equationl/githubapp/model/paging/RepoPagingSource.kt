@@ -4,6 +4,10 @@ import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.equationl.githubapp.common.constant.LocalCache
+import com.equationl.githubapp.common.database.CacheDB
+import com.equationl.githubapp.common.database.DBRepositoryFork
+import com.equationl.githubapp.common.database.DBUserRepos
+import com.equationl.githubapp.common.database.DBUserStared
 import com.equationl.githubapp.common.net.PageInfo
 import com.equationl.githubapp.model.conversion.ReposConversion
 import com.equationl.githubapp.model.ui.ReposUIModel
@@ -11,6 +15,7 @@ import com.equationl.githubapp.service.RepoService
 import com.equationl.githubapp.ui.view.list.GeneralListEnum
 import com.equationl.githubapp.ui.view.list.GeneralRepoListSort
 import com.equationl.githubapp.util.fromJson
+import com.equationl.githubapp.util.toJson
 import retrofit2.HttpException
 
 class RepoPagingSource(
@@ -18,7 +23,9 @@ class RepoPagingSource(
     private val userName: String,
     private val repoName: String,
     private val sort: GeneralRepoListSort?,
-    private val requestType: GeneralListEnum
+    private val requestType: GeneralListEnum,
+    private val dataBase: CacheDB,
+    private val onLoadFirstPageSuccess: () -> Unit
 ): PagingSource<Int, ReposUIModel>() {
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, ReposUIModel> {
@@ -82,6 +89,46 @@ class RepoPagingSource(
                 } ?: listOf()
             } else {
                 uiEventModel ?: listOf()
+            }
+
+            if (nextPageNumber == 1) { // 缓存第一页数据
+                when (requestType) {
+                    GeneralListEnum.UserRepository -> {
+                        dataBase.cacheDB().insertUserRepos(
+                            DBUserRepos(
+                                "$userName$sort",
+                                userName,
+                                response.body()?.toJson(),
+                                sort?.requestValue ?: ""
+                            )
+                        )
+                    }
+                    GeneralListEnum.UserStar -> {
+                        dataBase.cacheDB().insertUserStared(
+                            DBUserStared(
+                                "$userName$sort",
+                                userName,
+                                response.body()?.toJson(),
+                                sort?.requestValue ?: ""
+                            )
+                        )
+                    }
+                    GeneralListEnum.RepositoryForkUser -> {
+                        dataBase.cacheDB().insertRepositoryFork(
+                            DBRepositoryFork(
+                                "$userName/$repoName",
+                                "$userName/$repoName",
+                                response.body()?.toJson()
+                            )
+                        )
+
+                    }
+                    else -> { }
+                }
+
+                if (resultList.isNotEmpty()) {
+                    onLoadFirstPageSuccess()
+                }
             }
 
             return LoadResult.Page(

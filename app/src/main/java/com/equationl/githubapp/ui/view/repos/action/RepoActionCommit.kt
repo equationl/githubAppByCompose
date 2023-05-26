@@ -13,7 +13,10 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.equationl.githubapp.common.route.Route
 import com.equationl.githubapp.model.ui.CommitUIModel
+import com.equationl.githubapp.ui.common.BaseEvent
 import com.equationl.githubapp.ui.common.BaseRefreshPaging
+import com.equationl.githubapp.ui.common.comPlaceholder
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,8 +33,10 @@ fun RepoActionCommitContent(
     LaunchedEffect(Unit) {
         viewModel.viewEvents.collect {
             when (it) {
-                is RepoActionCommitEvent.ShowMsg -> {
-                    scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                is BaseEvent.ShowMsg -> {
+                    launch {
+                        scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                    }
                 }
             }
         }
@@ -41,27 +46,30 @@ fun RepoActionCommitContent(
         viewModel.dispatch(RepoActionCommitAction.SetData(userName, reposName))
     }
 
-    if (viewState.commitFlow != null) {
-        val commitList = viewState.commitFlow.collectAsLazyPagingItems()
-        RefreshContent(
-            commitPagingItems = commitList,
-            onLoadError = {
-                viewModel.dispatch(RepoActionCommitAction.ShowMsg(it))
-            },
-            onClickItem = {
-                navController.navigate("${Route.PUSH_DETAIL}/$reposName/$userName/${it.sha}")
-            },
-            headerItem = headerItem
-        )
+    val commitList = viewState.commitFlow?.collectAsLazyPagingItems()
+
+    if (commitList?.itemCount == 0 && viewModel.isInit && viewState.cacheCommitList.isNullOrEmpty()) {
+        return
     }
-    else {
-        Text(text = "Need init...")
-    }
+
+    RefreshContent(
+        commitPagingItems = commitList,
+        cacheCommitList = viewState.cacheCommitList,
+        onLoadError = {
+            viewModel.dispatch(RepoActionCommitAction.ShowMsg(it))
+        },
+        onClickItem = {
+            navController.navigate("${Route.PUSH_DETAIL}/$reposName/$userName/${it.sha}")
+        },
+        headerItem = headerItem
+    )
+
 }
 
 @Composable
 private fun RefreshContent(
-    commitPagingItems: LazyPagingItems<CommitUIModel>,
+    commitPagingItems: LazyPagingItems<CommitUIModel>?,
+    cacheCommitList: List<CommitUIModel>? = null,
     onLoadError: (msg: String) -> Unit,
     onClickItem: (commitUIModel: CommitUIModel) -> Unit,
     headerItem: (LazyListScope.() -> Unit)? = null,
@@ -69,12 +77,14 @@ private fun RefreshContent(
 ) {
     BaseRefreshPaging(
         pagingItems = commitPagingItems,
-        itemUi = {
+        cacheItems = cacheCommitList,
+        itemUi = { data, isRefresh ->
             Column(modifier = Modifier.padding(8.dp)) {
                 DynamicColumnItem(
-                    it
+                    data,
+                    isRefresh
                 ) {
-                    onClickItem(it)
+                    onClickItem(data)
                 }
             }
         },
@@ -89,6 +99,7 @@ private fun RefreshContent(
 @Composable
 private fun DynamicColumnItem(
     commitUIModel: CommitUIModel,
+    isRefresh: Boolean,
     onClick: () -> Unit
 ) {
     Card(onClick = onClick) {
@@ -97,12 +108,12 @@ private fun DynamicColumnItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(text = commitUIModel.userName)
-                Text(text = commitUIModel.time)
+                Text(text = commitUIModel.userName, modifier = Modifier.comPlaceholder(isRefresh))
+                Text(text = commitUIModel.time, modifier = Modifier.comPlaceholder(isRefresh))
             }
 
-            Text(text = commitUIModel.des, modifier = Modifier.padding(top = 4.dp))
-            Text(text = "sha: ${commitUIModel.sha}", modifier = Modifier.padding(top = 4.dp))
+            Text(text = commitUIModel.des, modifier = Modifier.padding(top = 4.dp).comPlaceholder(isRefresh))
+            Text(text = "sha: ${commitUIModel.sha}", modifier = Modifier.padding(top = 4.dp).comPlaceholder(isRefresh))
         }
     }
 }

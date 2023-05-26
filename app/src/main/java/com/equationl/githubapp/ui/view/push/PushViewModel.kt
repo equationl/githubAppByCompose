@@ -1,6 +1,7 @@
 package com.equationl.githubapp.ui.view.push
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -26,10 +27,13 @@ import javax.inject.Inject
 class PushViewModel @Inject constructor(
     private val commitService: CommitService
 ): BaseViewModel() {
-    override val exception: CoroutineExceptionHandler
-        get() = super.exception.apply {
+    override val exception = CoroutineExceptionHandler { _, throwable ->
+        viewModelScope.launch {
+            Log.e("PushViewModel", "Request Error: ", throwable)
+            _viewEvents.send(BaseEvent.ShowMsg("错误："+throwable.message))
             viewStates = viewStates.copy(isRefresh = false)
         }
+    }
 
     var viewStates by mutableStateOf(PushState())
         private set

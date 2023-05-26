@@ -50,14 +50,17 @@ import com.equationl.githubapp.common.route.Route
 import com.equationl.githubapp.common.utlis.copy
 import com.equationl.githubapp.model.ui.IssueUIModel
 import com.equationl.githubapp.ui.common.AvatarContent
+import com.equationl.githubapp.ui.common.BaseEvent
 import com.equationl.githubapp.ui.common.BaseRefreshPaging
 import com.equationl.githubapp.ui.common.MoreMenu
 import com.equationl.githubapp.ui.common.TopBar
+import com.equationl.githubapp.ui.common.comPlaceholder
 import com.halilibo.richtext.markdown.Markdown
 import com.halilibo.richtext.ui.material3.Material3RichText
 import com.vanpra.composematerialdialogs.MaterialDialog
 import com.vanpra.composematerialdialogs.MaterialDialogState
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
+import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -81,8 +84,10 @@ fun IssueDetailScreen(
     LaunchedEffect(commentList) {
         viewModel.viewEvents.collect {
             when (it) {
-                is IssueEvent.ShowMsg -> {
-                    scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                is BaseEvent.ShowMsg -> {
+                    launch {
+                        scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                    }
                 }
 
                 is IssueEvent.Refresh -> {
@@ -101,7 +106,7 @@ fun IssueDetailScreen(
             var isShowDropMenu by remember { mutableStateOf(false) }
 
             TopBar(
-                title = viewState.issueInfo.action,
+                title = if (viewState.cacheIssueInfo == null) viewState.issueInfo.action else viewState.cacheIssueInfo.action,
                 actions = {
                     MoreMenu(
                         isShow = isShowDropMenu,
@@ -130,7 +135,7 @@ fun IssueDetailScreen(
         },
         bottomBar = {
             BottomBar(
-                issueUIModel = viewState.issueInfo,
+                issueUIModel = viewState.cacheIssueInfo ?: viewState.issueInfo,
                 onChangeIssueStatus = { viewModel.dispatch(IssueAction.OnChangeIssueStatus(it)) },
                 onChangeIssueLockStatus = { viewModel.dispatch(IssueAction.OnChangeIssueLockStatus(it)) },
                 onClickAddComment = {
@@ -177,12 +182,19 @@ fun IssueDetailScreen(
                 .fillMaxSize()
                 .padding(it)
         ) {
-            IssueContent(commentList, viewState.issueInfo, navController, onError = {msg ->
-                viewModel.dispatch(IssueAction.ShowMag(msg))
-            }, onClickComment = { issueUuiModel ->
-                clickCommentItem = issueUuiModel
-                commentMenuDialogState.show()
-            })
+            IssueContent(
+                commentList,
+                viewState.cacheCommentList,
+                viewState.cacheIssueInfo ?: viewState.issueInfo,
+                navController,
+                viewModel.isInit && viewState.cacheCommentList.isNullOrEmpty(),
+                onError = {msg ->
+                    viewModel.dispatch(IssueAction.ShowMag(msg))
+                },
+                onClickComment = { issueUuiModel ->
+                    clickCommentItem = issueUuiModel
+                    commentMenuDialogState.show()
+                })
         }
     }
 
@@ -343,17 +355,26 @@ private fun CommentEditMenuDialog(
 @Composable
 private fun IssueContent(
     commentList: LazyPagingItems<IssueUIModel>?,
+    cacheCommentList: List<IssueUIModel>?,
     issueInfo: IssueUIModel,
     navController: NavHostController,
+    isInit: Boolean,
     onError: (msg: String) -> Unit,
     onClickComment: (issueUIModel: IssueUIModel) -> Unit
 ) {
+    // FIXME 这里返回后的位置不对
+    if (commentList?.itemCount == 0 && isInit) {
+        return
+    }
+
     BaseRefreshPaging(
         pagingItems = commentList,
-        itemUi = {
+        cacheItems = cacheCommentList,
+        itemUi = { data, isRefresh ->
             Column(modifier = Modifier.padding(8.dp)) {
                 CommentItem(
-                    it,
+                    data,
+                    isRefresh,
                     navController
                 ) {
                     onClickComment(it)
@@ -383,6 +404,7 @@ private fun IssueContent(
 @Composable
 private fun CommentItem(
     issueUIModel: IssueUIModel,
+    isRefresh: Boolean,
     navController: NavHostController,
     onClickComment: (issueUIModel: IssueUIModel) -> Unit
 ) {
@@ -402,15 +424,16 @@ private fun CommentItem(
                         data = issueUIModel.image,
                         navHostController = navController,
                         userName = issueUIModel.username,
+                        isRefresh = isRefresh
                     )
 
-                    Text(text = issueUIModel.username, modifier = Modifier.padding(start = 4.dp))
+                    Text(text = issueUIModel.username, modifier = Modifier.padding(start = 4.dp).comPlaceholder(isRefresh))
                 }
 
-                Text(text = issueUIModel.time)
+                Text(text = issueUIModel.time, modifier = Modifier.comPlaceholder(isRefresh))
             }
 
-            Material3RichText(modifier = Modifier.padding(start = 30.dp)) {
+            Material3RichText(modifier = Modifier.padding(start = 30.dp).comPlaceholder(isRefresh)) {
                 Markdown(content = issueUIModel.action)
             }
         }

@@ -3,18 +3,23 @@ package com.equationl.githubapp.model.paging
 import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import com.equationl.githubapp.common.database.CacheDB
+import com.equationl.githubapp.common.database.DBIssueComment
 import com.equationl.githubapp.common.net.PageInfo
 import com.equationl.githubapp.model.conversion.IssueConversion
 import com.equationl.githubapp.model.ui.IssueUIModel
 import com.equationl.githubapp.service.IssueService
 import com.equationl.githubapp.util.fromJson
+import com.equationl.githubapp.util.toJson
 import retrofit2.HttpException
 
 class IssueCommentsPagingSource(
     private val userName: String,
     private val repoName: String,
     private val issueNumber: Int,
-    private val issueService: IssueService
+    private val issueService: IssueService,
+    private val dataBase: CacheDB,
+    private val onLoadFirstPageSuccess: () -> Unit
 ): PagingSource<Int, IssueUIModel>() {
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, IssueUIModel> {
@@ -31,6 +36,19 @@ class IssueCommentsPagingSource(
 
             val issueUiModel = response.body()?.map { IssueConversion.issueEventToIssueUIModel(it) }
 
+            if (nextPageNumber == 1) { // 缓存第一页
+                dataBase.cacheDB().insertIssueComment(DBIssueComment(
+                    "$userName/$repoName",
+                    "$userName/$repoName",
+                    issueNumber.toString(),
+                    "-1",
+                    response.body()?.toJson()
+                ))
+
+                if (!issueUiModel.isNullOrEmpty()) {
+                    onLoadFirstPageSuccess()
+                }
+            }
 
             return LoadResult.Page(
                 data = issueUiModel ?: listOf(),

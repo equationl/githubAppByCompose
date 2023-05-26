@@ -3,17 +3,22 @@ package com.equationl.githubapp.model.paging
 import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import com.equationl.githubapp.common.database.CacheDB
+import com.equationl.githubapp.common.database.DBRepositoryCommits
 import com.equationl.githubapp.common.net.PageInfo
 import com.equationl.githubapp.model.conversion.EventConversion
 import com.equationl.githubapp.model.ui.CommitUIModel
 import com.equationl.githubapp.service.CommitService
 import com.equationl.githubapp.util.fromJson
+import com.equationl.githubapp.util.toJson
 import retrofit2.HttpException
 
 class RepoCommitPagingSource(
     private val commitService: CommitService,
     private val userName: String,
-    private val repoName: String
+    private val repoName: String,
+    private val dataBase: CacheDB,
+    private val onLoadFirstPageSuccess: () -> Unit
 ): PagingSource<Int, CommitUIModel>() {
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, CommitUIModel> {
@@ -33,6 +38,20 @@ class RepoCommitPagingSource(
             Log.i("el", "load: 总页数 = $totalPage")
 
             val commitUiModel = response.body()?.map { EventConversion.commitToCommitUIModel(it) }
+
+            if (nextPageNumber == 1) { // 缓存第一页数据
+                dataBase.cacheDB().insertRepositoryCommits(
+                    DBRepositoryCommits(
+                        "$userName/$repoName",
+                        "$userName/$repoName",
+                        response.body()?.toJson()
+                    )
+                )
+
+                if (!commitUiModel.isNullOrEmpty()) {
+                    onLoadFirstPageSuccess()
+                }
+            }
 
             return LoadResult.Page(
                 data = commitUiModel ?: listOf(),
