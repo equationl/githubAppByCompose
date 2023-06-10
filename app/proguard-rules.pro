@@ -19,3 +19,8 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# keep data model
+-keep class com.equationl.githubapp.model.BaseUIModel
+-keep class com.equationl.githubapp.model.bean.** { *; }
+-keep class com.equationl.githubapp.model.ui.** { *; }
