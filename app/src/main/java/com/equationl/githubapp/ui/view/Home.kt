@@ -21,6 +21,7 @@ import com.equationl.githubapp.ui.view.main.MainScreen
 import com.equationl.githubapp.ui.view.notify.NotifyScreen
 import com.equationl.githubapp.ui.view.person.PersonScreen
 import com.equationl.githubapp.ui.view.push.PushDetailScreen
+import com.equationl.githubapp.ui.view.release.ReleaseScreen
 import com.equationl.githubapp.ui.view.repos.RepoDetailScreen
 import com.equationl.githubapp.ui.view.search.SearchScreen
 import com.equationl.githubapp.ui.view.userInfo.UserInfoScreen
@@ -37,6 +38,7 @@ fun HomeNavHost(
     val navController = rememberAnimatedNavController()
     AnimatedNavHost(navController, Route.WELCOME) {
 
+        // 欢迎页
         composable(Route.WELCOME) {
             Column(Modifier.systemBarsPadding()) {
                 WelcomeScreen(navHostController = navController)
@@ -57,30 +59,44 @@ fun HomeNavHost(
             }
         }
 
+        // 主页
         composable(Route.MAIN) {
             Column(Modifier.systemBarsPadding()) {
                 MainScreen(navController, onFinish)
             }
         }
 
+        // 通知页
         composable(Route.NOTIFY) {
             Column(Modifier.systemBarsPadding()) {
                 NotifyScreen(navHostController = navController)
             }
         }
 
+        // 用户信息页
         composable(Route.USER_INFO) {
             Column(Modifier.systemBarsPadding()) {
                 UserInfoScreen(navHostController = navController)
             }
         }
 
-        composable(Route.SEARCH) {
+        // 搜索页
+        composable("${Route.SEARCH}?${RouteParams.PAR_SEARCH_QUERY}={${RouteParams.PAR_SEARCH_QUERY}}",
+            arguments = listOf(
+                navArgument(RouteParams.PAR_SEARCH_QUERY) {
+                    type = NavType.StringType
+                    nullable = true
+                }
+            )
+        ) {
+            val query = it.arguments?.getString(RouteParams.PAR_SEARCH_QUERY)
+
             Column(Modifier.systemBarsPadding()) {
-                SearchScreen(navHostController = navController)
+                SearchScreen(navHostController = navController, queryString = query)
             }
         }
 
+        // 仓库详情页
         composable("${Route.REPO_DETAIL}/{${RouteParams.PAR_REPO_PATH}}/{${RouteParams.PAR_REPO_OWNER}}",
             arguments = listOf(
                 navArgument(RouteParams.PAR_REPO_PATH) {
@@ -101,6 +117,7 @@ fun HomeNavHost(
             }
         }
 
+        // ISSUE 详情页
         composable("${Route.ISSUE_DETAIL}/{${RouteParams.PAR_REPO_PATH}}/{${RouteParams.PAR_REPO_OWNER}}/{${RouteParams.PAR_ISSUE_NUM}}",
             arguments = listOf(
                 navArgument(RouteParams.PAR_REPO_PATH) {
@@ -131,6 +148,7 @@ fun HomeNavHost(
             }
         }
 
+        // 提交详情页
         composable("${Route.PUSH_DETAIL}/{${RouteParams.PAR_REPO_PATH}}/{${RouteParams.PAR_REPO_OWNER}}/{${RouteParams.PAR_PUSH_SHA}}",
             arguments = listOf(
                 navArgument(RouteParams.PAR_REPO_PATH) {
@@ -156,6 +174,7 @@ fun HomeNavHost(
             }
         }
 
+        // 代码预览页
         composable("${Route.CODE_DETAIL}/{${RouteParams.PAR_REPO_PATH}}/{${RouteParams.PAR_REPO_OWNER}}/{${RouteParams.PAR_FILE_PATH}}/{${RouteParams.PAR_LOCAL_CODE}}/{${RouteParams.PAR_URL}}",
             arguments = listOf(
                 navArgument(RouteParams.PAR_REPO_PATH) {
@@ -176,7 +195,7 @@ fun HomeNavHost(
                 },
                 navArgument(RouteParams.PAR_URL) {
                     type = NavType.StringType
-                    nullable = true // TODO 这里的可空用错了
+                    nullable = true
                 },
             )) {
             val argument = requireNotNull(it.arguments)
@@ -198,6 +217,7 @@ fun HomeNavHost(
             }
         }
 
+        // 用户详情页
         composable("${Route.PERSON_DETAIL}/{${RouteParams.PAR_USER_NAME}}",
             arguments = listOf(
                 navArgument(RouteParams.PAR_USER_NAME) {
@@ -213,6 +233,7 @@ fun HomeNavHost(
             }
         }
 
+        // 图像预览页
         composable("${Route.IMAGE_PREVIEW}/{${RouteParams.PAR_IMAGE_URL}}",
             arguments = listOf(
                 navArgument(RouteParams.PAR_IMAGE_URL) {
@@ -228,6 +249,7 @@ fun HomeNavHost(
             }
         }
 
+        // 仓库列表页
         composable("${Route.REPO_LIST}/{${RouteParams.PAR_REPO_PATH}}/{${RouteParams.PAR_REPO_OWNER}}/{${RouteParams.PAR_REPO_REQUEST_TYPE}}",
             arguments = listOf(
                 navArgument(RouteParams.PAR_REPO_PATH) {
@@ -259,6 +281,7 @@ fun HomeNavHost(
             }
         }
 
+        // 用户列表页
         composable("${Route.USER_LIST}/{${RouteParams.PAR_REPO_PATH}}/{${RouteParams.PAR_REPO_OWNER}}/{${RouteParams.PAR_REPO_REQUEST_TYPE}}",
             arguments = listOf(
                 navArgument(RouteParams.PAR_REPO_PATH) {
@@ -286,6 +309,31 @@ fun HomeNavHost(
                     userName ?: "",
                     requestType = requestType,
                     navController
+                )
+            }
+        }
+
+        // RELEASE 列表页
+        composable("${Route.RELEASE_LIST}/{${RouteParams.PAR_REPO_OWNER}}/{${RouteParams.PAR_REPO_PATH}}",
+            arguments = listOf(
+                navArgument(RouteParams.PAR_REPO_OWNER) {
+                    type = NavType.StringType
+                    nullable = false
+                },
+                navArgument(RouteParams.PAR_REPO_PATH) {
+                    type = NavType.StringType
+                    nullable = false
+                },
+            )) {
+            val argument = requireNotNull(it.arguments)
+            val repoOwner = argument.getString(RouteParams.PAR_REPO_OWNER)
+            val repoName = argument.getString(RouteParams.PAR_REPO_PATH)
+
+            Column(Modifier.systemBarsPadding()) {
+                ReleaseScreen(
+                    repoName = repoName,
+                    repoOwner = repoOwner,
+                    navController = navController
                 )
             }
         }

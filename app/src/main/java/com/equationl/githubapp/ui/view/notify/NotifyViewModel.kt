@@ -17,6 +17,7 @@ import com.equationl.githubapp.service.NotificationService
 import com.equationl.githubapp.ui.common.BaseAction
 import com.equationl.githubapp.ui.common.BaseEvent
 import com.equationl.githubapp.ui.common.BaseViewModel
+import com.equationl.githubapp.ui.view.dynamic.DynamicViewEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -98,8 +99,7 @@ class NotifyViewModel @Inject constructor(
                 }
             }
             EventUIAction.Release -> {
-                // TODO
-                _viewEvents.trySend(BaseEvent.ShowMsg("Click A Release Item!"))
+                _viewEvents.trySend(DynamicViewEvent.Goto("${Route.REPO_DETAIL}/${eventUIModel.repositoryName}/${eventUIModel.owner}"))
             }
         }
     }

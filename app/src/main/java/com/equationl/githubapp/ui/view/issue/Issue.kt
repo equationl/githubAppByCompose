@@ -1,5 +1,6 @@
 package com.equationl.githubapp.ui.view.issue
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -56,6 +57,7 @@ import com.equationl.githubapp.ui.common.MoreMenu
 import com.equationl.githubapp.ui.common.TopBar
 import com.equationl.githubapp.ui.common.comPlaceholder
 import com.halilibo.richtext.markdown.Markdown
+import com.halilibo.richtext.markdown.MarkdownParseOptions
 import com.halilibo.richtext.ui.material3.Material3RichText
 import com.vanpra.composematerialdialogs.MaterialDialog
 import com.vanpra.composematerialdialogs.MaterialDialogState
@@ -434,7 +436,13 @@ private fun CommentItem(
             }
 
             Material3RichText(modifier = Modifier.padding(start = 30.dp).comPlaceholder(isRefresh)) {
-                Markdown(content = issueUIModel.action)
+                Markdown(
+                    content = issueUIModel.action,
+                    markdownParseOptions = MarkdownParseOptions.Default.copy(autolink = false, imgFillMaxWidth = true),
+                    onImgClicked = {
+                        navController.navigate("${Route.IMAGE_PREVIEW}/${Uri.encode(it)}")
+                    }
+                )
             }
         }
     }
@@ -493,9 +501,14 @@ private fun Header(
                     .fillMaxWidth()
                     .padding(top = 6.dp)
             ) {
-                // TODO md 中的图片太小了，看不清楚
                 Material3RichText {
-                    Markdown(content = issueUIModel.content)
+                    Markdown(
+                        content = issueUIModel.content,
+                        markdownParseOptions = MarkdownParseOptions.Default.copy(autolink = false, imgFillMaxWidth = true),
+                        onImgClicked = {
+                            navController.navigate("${Route.IMAGE_PREVIEW}/${Uri.encode(it)}")
+                        }
+                    )
                 }
             }
 

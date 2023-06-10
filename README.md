@@ -17,7 +17,10 @@
 
 # 使用
 
-## 编译运行流程
+## 2. 直接下载安装
+请前往 [Release](https://github.com/equationl/githubAppByCompose/releases) 页面下载已编译的 apk 文件安装体验。
+
+## 1. 编译运行流程
 
 > 以下介绍引用自 [gsy_github_app_flutter](https://github.com/CarGuo/gsy_github_app_flutter)
 
@@ -30,7 +33,7 @@ CLIENT_SECRET = "xxxxxx"
 
 [注册 Github APP 传送门](https://github.com/settings/applications/new)，当然，前提是你现有一个github账号。
 
-### 3、现在 Github API 需要使用安全登录（授权登录），那么在上述注册 Github App 的 Authorization callback URL 一栏必须填入 `gsygithubapp://authed`
+### 3、现在 Github API 需要使用安全登录（授权登录），那么在上述注册 Github App 的 Authorization callback URL 一栏必须填入 `githubappbyel://authed`
 
 <div>
 <img src="http://img.cdn.guoshuyu.cn/register0.png" width="426px"/>

@@ -134,6 +134,10 @@ object EventConversion {
         eventUIModel.image = event.actor?.avatarUrl ?: ""
         eventUIModel.time = CommonUtils.getNewsTimeStr(event.createdAt)
         eventUIModel.id = event.id ?: ""
+
+        if (event.type == "ReleaseEvent") {
+            eventUIModel.des = event.payload?.release?.body ?: "没有找到 RELEASE 详情"
+        }
         return eventUIModel
     }
 

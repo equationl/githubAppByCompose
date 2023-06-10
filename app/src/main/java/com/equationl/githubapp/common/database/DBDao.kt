@@ -88,8 +88,8 @@ interface CacheDao{
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRepositoryCommits(data: DBRepositoryCommits)
 
-    @Query("SELECT * FROM repository_commits WHERE fullName = :fullName")
-    suspend fun queryRepositoryCommits(fullName: String): List<DBRepositoryCommits>?
+    @Query("SELECT * FROM repository_commits WHERE fullName = :fullName AND branch = :branch")
+    suspend fun queryRepositoryCommits(fullName: String, branch: String?): List<DBRepositoryCommits>?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRepositoryIssue(data: DBRepositoryIssue)
@@ -112,12 +112,18 @@ interface CacheDao{
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRepositoryDetailReadme(data: DBRepositoryDetailReadme)
 
-    @Query("SELECT * FROM repository_readme WHERE fullName = :fullName")
-    suspend fun queryRepositoryDetailReadme(fullName: String): List<DBRepositoryDetailReadme>?
+    @Query("SELECT * FROM repository_readme WHERE fullName = :fullName AND branch = :branch")
+    suspend fun queryRepositoryDetailReadme(fullName: String, branch: String?): List<DBRepositoryDetailReadme>?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUserInfo(data: DBUserInfo)
 
     @Query("SELECT * FROM user_info WHERE userName = :userName")
     suspend fun queryUserInfo(userName: String): List<DBUserInfo>?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertRepositoryRelease(data: DBRepositoryRelease)
+
+    @Query("SELECT * FROM repository_release WHERE fullName = :fullName AND isRelease = :isRelease")
+    suspend fun queryRepositoryRelease(fullName: String, isRelease: Boolean): List<DBRepositoryRelease>?
 }

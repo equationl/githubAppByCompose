@@ -49,7 +49,7 @@ interface RepoService {
             @Query("page") page: Int,
             @Query("sort") sort: String = "pushed",
             @Query("per_page") per_page: Int = AppConfig.PAGE_SIZE
-    ):retrofit2.Response<ArrayList<Repository>>
+    ): Response<ArrayList<Repository>>
 
     /**
      * Check if you are starring a repository
@@ -115,19 +115,22 @@ interface RepoService {
             @Path("owner") owner: String,
             @Path("repo") repo: String,
             @Path("path", encoded = true) path: String,
+            @Query("ref") branch: String? = null
     ):Response<ArrayList<FileModel>>
 
     @GET("repos/{owner}/{repo}/branches")
-    fun getBranches(
+    suspend fun getBranches(
             @Path("owner") owner: String,
             @Path("repo") repo: String
     ):Response<ArrayList<Branch>>
 
     @GET("repos/{owner}/{repo}/tags")
-    fun getTags(
+    suspend fun getTags(
             @Path("owner") owner: String,
-            @Path("repo") repo: String
-    ):Response<ArrayList<Branch>>
+            @Path("repo") repo: String,
+            @Query("page") page: Int,
+            @Query("per_page") per_page: Int = AppConfig.PAGE_SIZE
+    ):Response<ArrayList<Release>>
 
     @GET("repos/{owner}/{repo}/stargazers")
     suspend fun getStargazers(
@@ -180,8 +183,7 @@ interface RepoService {
     ):Response<ArrayList<Event>>
 
     @GET("repos/{owner}/{repo}/releases")
-    @Headers("Accept: application/vnd.github.html")
-    fun getReleases(
+    suspend fun getReleases(
             @Header("forceNetWork") forceNetWork: Boolean,
             @Path("owner") owner: String,
             @Path("repo") repo: String,
@@ -231,7 +233,9 @@ interface RepoService {
     suspend fun getReadmeHtml(
             @Header("forceNetWork") forceNetWork: Boolean,
             @Path("owner") owner: String,
-            @Path("repo") repo: String,):Response<String>
+            @Path("repo") repo: String,
+            @Query("ref") branch: String? = null
+    ):Response<String>
 
 
     @GET("repos/{owner}/{repo}/contents/{path}")

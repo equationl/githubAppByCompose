@@ -117,8 +117,7 @@ open class DynamicViewModel @Inject constructor(
                 }*/
             }
             EventUIAction.Release -> {
-                // TODO
-                _viewEvents.trySend(BaseEvent.ShowMsg("Click A Release Item!"))
+                _viewEvents.trySend(DynamicViewEvent.Goto("${Route.REPO_DETAIL}/${eventUIModel.repositoryName}/${eventUIModel.owner}"))
             }
         }
     }

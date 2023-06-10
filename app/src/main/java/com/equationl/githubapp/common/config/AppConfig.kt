@@ -11,7 +11,7 @@ object AppConfig {
 
     const val GRAPHIC_HOST = "https://ghchart.rshah.org/"
 
-    const val AuthUri = "gsygithubapp://authed" // TODO
+    const val AuthUri = "githubappbyel://authed"
 
     const val API_TOKEN = "4d65e2a5626103f92a71867d7b49fea0"
 

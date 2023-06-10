@@ -33,4 +33,8 @@ class ReposUIModel: BaseUIModel() {
     var repositoryAction: String = "--"
 
     var repositoryIssue: String = "--"
+
+    var repositoryTopics: List<String> = listOf()
+
+    var repositoryLastUpdateTime: String = ""
 }

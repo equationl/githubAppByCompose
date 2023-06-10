@@ -25,9 +25,10 @@ import androidx.room.RoomDatabase
         DBRepositoryEvent::class,
         DBRepositoryDetail::class,
         DBRepositoryDetailReadme::class,
-        DBUserInfo::class
+        DBUserInfo::class,
+        DBRepositoryRelease::class
     ],
-    version = 5,
+    version = 7,
     exportSchema = false
 )
 //@TypeConverters(DBConverters::class)

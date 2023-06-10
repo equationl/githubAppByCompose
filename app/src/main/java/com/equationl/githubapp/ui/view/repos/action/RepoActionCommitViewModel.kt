@@ -32,6 +32,7 @@ class RepoActionCommitViewModel @Inject constructor(
 ): BaseViewModel() {
 
     private var commitFlow: Flow<PagingData<CommitUIModel>>? = null
+    private var branchCache: String? = null
 
     var viewStates by mutableStateOf(RepoActionCommitState(commitFlow = commitFlow))
         private set
@@ -39,15 +40,17 @@ class RepoActionCommitViewModel @Inject constructor(
     fun dispatch(action: RepoActionCommitAction) {
         when (action) {
             is RepoActionCommitAction.ShowMsg -> { _viewEvents.trySend(BaseEvent.ShowMsg(action.msg)) }
-            is RepoActionCommitAction.SetData -> setData(action.owner, action.repo)
+            is RepoActionCommitAction.SetData -> setData(action.owner, action.repo, action.branch)
         }
     }
 
-    private fun setData(owner: String, repo: String) {
-        if (isInit) return
+    private fun setData(owner: String, repo: String, branch: String?) {
+        if (isInit && branch == branchCache) return
+
+        branchCache = branch
 
         viewModelScope.launch(exception) {
-            val cacheData = dataBase.cacheDB().queryRepositoryCommits("$owner/$repo")
+            val cacheData = dataBase.cacheDB().queryRepositoryCommits("$owner/$repo", branch)
             if (!cacheData.isNullOrEmpty()) {
                 val body = cacheData[0].data?.fromJson<List<RepoCommit>>()
                 if (body != null) {
@@ -59,7 +62,7 @@ class RepoActionCommitViewModel @Inject constructor(
             commitFlow = Pager(
                 PagingConfig(pageSize = AppConfig.PAGE_SIZE, initialLoadSize = AppConfig.PAGE_SIZE)
             ) {
-                RepoCommitPagingSource(commitService, owner, repo, dataBase) {
+                RepoCommitPagingSource(commitService, owner, repo, branch, dataBase) {
                     viewStates = viewStates.copy(cacheCommitList = null)
                     isInit = true
                 }
@@ -77,5 +80,5 @@ data class RepoActionCommitState(
 
 sealed class RepoActionCommitAction: BaseAction() {
     data class ShowMsg(val msg: String): RepoActionCommitAction()
-    data class SetData(val owner: String, val repo: String): RepoActionCommitAction()
+    data class SetData(val owner: String, val repo: String, val branch: String?): RepoActionCommitAction()
 }

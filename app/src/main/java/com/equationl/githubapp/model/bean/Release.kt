@@ -5,31 +5,72 @@ import com.google.gson.annotations.SerializedName
 
 import java.util.Date
 
-
-class Release {
-
-    var id: String? = null
-    @SerializedName("tag_name")
-    var tagName: String? = null
-    @SerializedName("target_commitish")
-    var targetCommitish: String? = null
-    var name: String? = null
-    var body: String? = null
+data class Release(
+    @SerializedName("assets")
+    val assets: List<Asset>?,
+    @SerializedName("assets_url")
+    val assetsUrl: String,
+    @SerializedName("author")
+    val author: User,
+    @SerializedName("body")
+    val body: String?,
     @SerializedName("body_html")
-    var bodyHtml: String? = null
-    @SerializedName("tarball_url")
-    var tarballUrl: String? = null
-    @SerializedName("zipball_url")
-    var zipballUrl: String? = null
-
-    var draft: Boolean = false
-    @SerializedName("prerelease")
-    var preRelease: Boolean = false
+    val bodyHtml: String?,
     @SerializedName("created_at")
-    var createdAt: Date? = null
+    val createdAt: Date,
+    @SerializedName("draft")
+    val draft: Boolean,
+    @SerializedName("html_url")
+    val htmlUrl: String,
+    @SerializedName("id")
+    val id: Int,
+    @SerializedName("name")
+    val name: String?,
+    @SerializedName("node_id")
+    val nodeId: String,
+    @SerializedName("prerelease")
+    val prerelease: Boolean,
     @SerializedName("published_at")
-    var publishedAt: Date? = null
+    val publishedAt: Date?,
+    @SerializedName("tag_name")
+    val tagName: String,
+    @SerializedName("tarball_url")
+    val tarballUrl: String?,
+    @SerializedName("target_commitish")
+    val targetCommitish: String,
+    @SerializedName("upload_url")
+    val uploadUrl: String,
+    @SerializedName("url")
+    val url: String,
+    @SerializedName("zipball_url")
+    val zipballUrl: String?
+)
 
-    var author: User? = null
-
-}
+data class Asset(
+    @SerializedName("browser_download_url")
+    val browserDownloadUrl: String,
+    @SerializedName("content_type")
+    val contentType: String,
+    @SerializedName("created_at")
+    val createdAt: Date,
+    @SerializedName("download_count")
+    val downloadCount: Int,
+    @SerializedName("id")
+    val id: Int,
+    @SerializedName("label")
+    val label: Any,
+    @SerializedName("name")
+    val name: String,
+    @SerializedName("node_id")
+    val nodeId: String,
+    @SerializedName("size")
+    val size: Int,
+    @SerializedName("state")
+    val state: String,
+    @SerializedName("updated_at")
+    val updatedAt: Date,
+    @SerializedName("uploader")
+    val uploader: User,
+    @SerializedName("url")
+    val url: String
+)

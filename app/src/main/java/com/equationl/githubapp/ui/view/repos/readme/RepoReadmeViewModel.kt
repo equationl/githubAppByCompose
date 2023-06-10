@@ -38,13 +38,19 @@ class RepoReadmeViewModel @Inject constructor(
 
     fun dispatch(action: RepoReadMeAction) {
         when (action) {
-            is RepoReadMeAction.GetReadmeContent -> getReadmeContent(action.repoName, action.ownerName, action.backgroundColor, action.primaryColor)
+            is RepoReadMeAction.GetReadmeContent -> getReadmeContent(
+                action.repoName,
+                action.ownerName,
+                action.branch,
+                action.backgroundColor,
+                action.primaryColor
+            )
         }
     }
 
-    private fun getReadmeContent(repoName: String, ownerName: String, backgroundColor: Color, primaryColor: Color) {
+    private fun getReadmeContent(repoName: String, ownerName: String, branch: String?, backgroundColor: Color, primaryColor: Color) {
         viewModelScope.launch(exception) {
-            val cacheData = dataBase.cacheDB().queryRepositoryDetailReadme("$ownerName/$repoName")
+            val cacheData = dataBase.cacheDB().queryRepositoryDetailReadme("$ownerName/$repoName", branch)
             if (!cacheData.isNullOrEmpty()) {
                 val body = cacheData[0].data
                 if (body != null) {
@@ -54,7 +60,7 @@ class RepoReadmeViewModel @Inject constructor(
             }
 
 
-            val response = repoService.getReadmeHtml(true, ownerName, repoName)
+            val response = repoService.getReadmeHtml(true, ownerName, repoName, branch = branch)
             if (response.isSuccessful) {
                 val body = response.body()
                 if (body == null) {
@@ -63,10 +69,10 @@ class RepoReadmeViewModel @Inject constructor(
                 else {
                     dataBase.cacheDB().insertRepositoryDetailReadme(
                         DBRepositoryDetailReadme(
-                            "$ownerName/$repoName",
+                            "$ownerName/$repoName/$branch",
                             "$ownerName/$repoName",
                             response.body(),
-                            ""
+                            branch
                         )
                     )
 
@@ -79,7 +85,7 @@ class RepoReadmeViewModel @Inject constructor(
                 if (response.code() == 404) {
                     dataBase.cacheDB().insertRepositoryDetailReadme(
                         DBRepositoryDetailReadme(
-                            "$ownerName/$repoName",
+                            "$ownerName/$repoName/$branch",
                             "$ownerName/$repoName",
                             "该仓库没有 README",
                             ""
@@ -102,7 +108,7 @@ data class RepoReadmeState(
 )
 
 sealed class RepoReadMeAction {
-    data class GetReadmeContent(val repoName: String, val ownerName: String, val backgroundColor: Color, val primaryColor: Color): RepoReadMeAction()
+    data class GetReadmeContent(val repoName: String, val ownerName: String, val branch: String?, val backgroundColor: Color, val primaryColor: Color): RepoReadMeAction()
 }
 
 sealed class RepoReadMeEvent {

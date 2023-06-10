@@ -29,6 +29,7 @@ import kotlinx.coroutines.launch
 fun ReposFileContent(
     userName: String,
     repoName: String,
+    branch: String?,
     scaffoldState: BottomSheetScaffoldState,
     navController: NavHostController,
     viewModel: RepoFileViewModel = hiltViewModel()
@@ -44,7 +45,7 @@ fun ReposFileContent(
                     }
                 }
                 is RepoFileEvent.Refresh -> {
-                    viewModel.dispatch(RepoFileAction.LoadData(repoName, userName))
+                    viewModel.dispatch(RepoFileAction.LoadData(repoName, userName, branch))
                 }
                 is RepoFileEvent.GoTo -> {
                     navController.navigate(it.path)
@@ -53,8 +54,8 @@ fun ReposFileContent(
         }
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.dispatch(RepoFileAction.LoadData(repoName, userName))
+    LaunchedEffect(branch) {
+        viewModel.dispatch(RepoFileAction.LoadData(repoName, userName, branch))
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -72,7 +73,7 @@ fun ReposFileContent(
                 viewModel.dispatch(RepoFileAction.OnClickFile(it, userName, repoName))
             },
             onRefresh = {
-                viewModel.dispatch(RepoFileAction.LoadData(repoName, userName))
+                viewModel.dispatch(RepoFileAction.LoadData(repoName, userName, branch))
             }
         )
     }

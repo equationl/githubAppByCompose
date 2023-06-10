@@ -6,7 +6,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.paging.compose.LazyPagingItems
@@ -16,6 +18,8 @@ import com.equationl.githubapp.model.ui.CommitUIModel
 import com.equationl.githubapp.ui.common.BaseEvent
 import com.equationl.githubapp.ui.common.BaseRefreshPaging
 import com.equationl.githubapp.ui.common.comPlaceholder
+import com.halilibo.richtext.markdown.Markdown
+import com.halilibo.richtext.ui.material3.Material3RichText
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -23,6 +27,7 @@ import kotlinx.coroutines.launch
 fun RepoActionCommitContent(
     userName: String,
     reposName: String,
+    branch: String?,
     headerItem: LazyListScope.() -> Unit,
     scaffoldState: BottomSheetScaffoldState,
     navController: NavHostController,
@@ -42,8 +47,8 @@ fun RepoActionCommitContent(
         }
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.dispatch(RepoActionCommitAction.SetData(userName, reposName))
+    LaunchedEffect(branch) {
+        viewModel.dispatch(RepoActionCommitAction.SetData(userName, reposName, branch))
     }
 
     val commitList = viewState.commitFlow?.collectAsLazyPagingItems()
@@ -108,12 +113,34 @@ private fun DynamicColumnItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(text = commitUIModel.userName, modifier = Modifier.comPlaceholder(isRefresh))
-                Text(text = commitUIModel.time, modifier = Modifier.comPlaceholder(isRefresh))
+                Text(
+                    text = commitUIModel.userName,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.comPlaceholder(isRefresh)
+                )
+                Text(
+                    text = commitUIModel.time,
+                    modifier = Modifier.comPlaceholder(isRefresh)
+                )
             }
 
-            Text(text = commitUIModel.des, modifier = Modifier.padding(top = 4.dp).comPlaceholder(isRefresh))
-            Text(text = "sha: ${commitUIModel.sha}", modifier = Modifier.padding(top = 4.dp).comPlaceholder(isRefresh))
+            Material3RichText(
+                modifier = Modifier
+                    .padding(top = 4.dp)
+                    .comPlaceholder(isRefresh)
+            ) {
+                Markdown(content = commitUIModel.des)
+            }
+
+            Text(
+                text = "sha: ${commitUIModel.sha}",
+                color = MaterialTheme.colorScheme.outline,
+                fontSize = 12.sp,
+                modifier = Modifier
+                    .padding(top = 4.dp)
+                    .comPlaceholder(isRefresh)
+            )
         }
     }
 }

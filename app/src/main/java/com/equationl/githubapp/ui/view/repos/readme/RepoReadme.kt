@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 fun ReposReadmeContent(
     userName: String,
     reposName: String,
+    branch: String?,
     scaffoldState: BottomSheetScaffoldState,
     viewModel: RepoReadmeViewModel = hiltViewModel()
 ) {
@@ -35,8 +36,8 @@ fun ReposReadmeContent(
         }
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.dispatch(RepoReadMeAction.GetReadmeContent(reposName, userName, backgroundColor, primaryColor))
+    LaunchedEffect(branch) {
+        viewModel.dispatch(RepoReadMeAction.GetReadmeContent(reposName, userName, branch, backgroundColor, primaryColor))
     }
 
 

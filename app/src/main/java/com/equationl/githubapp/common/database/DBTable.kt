@@ -13,6 +13,7 @@ data class DBRepositoryCommits (
     @PrimaryKey
     var key: String,
     var fullName: String? = null,
+    var branch: String? = null,
     var data: String? = null
 )
 
@@ -82,6 +83,14 @@ data class DBRepositoryIssue(
     var state: String?,
 )
 
+@Entity(tableName = "repository_release")
+data class DBRepositoryRelease(
+    @PrimaryKey
+    var key: String,
+    var fullName: String?,
+    var data: String?,
+    var isRelease: Boolean,
+)
 
 @Entity(tableName = "trend_repository")
 data class DBTrendRepository(

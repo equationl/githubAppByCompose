@@ -61,5 +61,6 @@ data class Repository (
     @SerializedName("has_wiki")
     var hasWiki: Boolean = false,
     @SerializedName("has_pages")
-    var hasPages: Boolean = false
+    var hasPages: Boolean = false,
+    var topics: List<String>? = null,
 )

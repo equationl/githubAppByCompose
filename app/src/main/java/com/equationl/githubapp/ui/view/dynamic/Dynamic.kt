@@ -1,5 +1,6 @@
 package com.equationl.githubapp.ui.view.dynamic
 
+import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.*
@@ -14,6 +15,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.equationl.githubapp.common.route.Route
 import com.equationl.githubapp.model.bean.User
 import com.equationl.githubapp.model.ui.EventUIModel
 import com.equationl.githubapp.ui.common.AvatarContent
@@ -25,6 +27,7 @@ import com.equationl.githubapp.util.datastore.DataKey
 import com.equationl.githubapp.util.datastore.DataStoreUtils
 import com.equationl.githubapp.util.fromJson
 import com.halilibo.richtext.markdown.Markdown
+import com.halilibo.richtext.markdown.MarkdownParseOptions
 import com.halilibo.richtext.ui.material3.Material3RichText
 import kotlinx.coroutines.launch
 
@@ -155,12 +158,24 @@ private fun EventItem(
             }
 
             Material3RichText(modifier = Modifier.comPlaceholder(isRefresh)) {
-                Markdown(content = action + if (des.isNotBlank()) " : " else "")
+                Markdown(
+                    content = action + if (des.isNotBlank()) " : " else "",
+                    markdownParseOptions = MarkdownParseOptions(autolink = false, imgFillMaxWidth = true),
+                    onImgClicked = {
+                        navHostController.navigate("${Route.IMAGE_PREVIEW}/${Uri.encode(it)}")
+                    }
+                )
             }
 
             if (des.isNotBlank()) {
                 Material3RichText(modifier = Modifier.padding(top = 8.dp).comPlaceholder(isRefresh)) {
-                    Markdown(content = des)
+                    Markdown(
+                        content = des,
+                        markdownParseOptions = MarkdownParseOptions.Default.copy(autolink = false, imgFillMaxWidth = true),
+                        onImgClicked = {
+                            navHostController.navigate("${Route.IMAGE_PREVIEW}/${Uri.encode(it)}")
+                        }
+                    )
                 }
             }
         }

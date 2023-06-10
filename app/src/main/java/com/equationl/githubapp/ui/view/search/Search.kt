@@ -67,6 +67,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SearchScreen(
     navHostController: NavHostController,
+    queryString: String?,
     viewModel: SearchViewModel = hiltViewModel()
 ) {
     val viewState = viewModel.viewStates
@@ -85,10 +86,16 @@ fun SearchScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        if (!queryString.isNullOrBlank()) {
+            viewModel.dispatch(SearchAction.OnSearch(queryString))
+        }
+    }
+
     Scaffold(
         topBar = {
             TopBar(
-                title = "搜索",
+                title = getTitle(queryString),
                 actions = {
                     IconButton(
                         onClick = {
@@ -107,9 +114,30 @@ fun SearchScreen(
                 Snackbar(snackbarData = snackBarData)
             }
         }
-    ) {
-        Column(modifier = Modifier.padding(it)) {
-            SearchContent(viewModel, navHostController)
+    ) { paddingValues ->
+        Column(modifier = Modifier.padding(paddingValues)) {
+
+            if (queryString.isNullOrBlank()) {
+                SearchContent(viewModel, navHostController)
+            }
+            else {
+                @Suppress("UNCHECKED_CAST")
+                val repoPagingItems = viewState.resultListFlow?.collectAsLazyPagingItems() as LazyPagingItems<ReposUIModel>?
+
+                GeneralRepoListContent(
+                    navHostController = navHostController,
+                    repoPagingItems = repoPagingItems,
+                    cacheRepoList = null,
+                    isInit = false,
+                    onLoadError = {
+                        viewModel.dispatch(BaseAction.ShowMag(it))
+                    },
+                    onClickItem = {
+                        navHostController.navigate("${Route.REPO_DETAIL}/${it.repositoryName}/${it.ownerName}")
+                    }
+                )
+            }
+
 
             FilterDialog(
                 dialogState = filterDialogState,
@@ -310,7 +338,9 @@ private fun SearchHeader(
             },
             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
             keyboardActions = KeyboardActions(onAny = { onSearch(searchText) }),
-            modifier = Modifier.fillMaxWidth().padding(6.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(6.dp)
         )
 
         Card(modifier = Modifier.padding(top = 8.dp)) {
@@ -336,6 +366,24 @@ private fun SearchHeader(
                     )
                 }
             }
+        }
+    }
+}
+
+private fun getTitle(queryString: String?): String {
+    return if (queryString.isNullOrBlank()) {
+        "搜索"
+    }
+    else {
+        if (queryString.startsWith("topic:")) {
+            try {
+                val topicName = queryString.substring(6)
+                "”$topicName“ 主题仓库"
+            } catch (tr: Throwable) {
+                "仓库"
+            }
+        } else {
+            "搜索： $queryString"
         }
     }
 }

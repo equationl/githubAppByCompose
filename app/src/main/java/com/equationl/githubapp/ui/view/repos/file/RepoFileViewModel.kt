@@ -38,18 +38,18 @@ class RepoFileViewModel @Inject constructor(
 
     fun dispatch(action: RepoFileAction) {
         when (action) {
-            is RepoFileAction.LoadData -> loadData(action.repoName, action.userName)
+            is RepoFileAction.LoadData -> loadData(action.repoName, action.userName, action.branch)
             is RepoFileAction.OnClickFile -> onClickFile(action.fileUIModel, action.userName, action.repoName)
             is RepoFileAction.OnClickPath -> onClickPath(action.pos)
         }
     }
 
-    private fun loadData(repoName: String, userName: String) {
+    private fun loadData(repoName: String, userName: String, branch: String?) {
         var path = viewStates.pathList.toSplitString()
         path = if (path == "/.") "" else path
         viewStates = viewStates.copy(isRefresh = true)
         viewModelScope.launch(exception) {
-            val response = repoService.getRepoFiles(userName, repoName, path)
+            val response = repoService.getRepoFiles(userName, repoName, path, branch = branch)
             if (response.isSuccessful) {
                 val body = response.body()
                 if (body == null) {
@@ -123,7 +123,7 @@ data class RepoFileState(
 )
 
 sealed class RepoFileAction : BaseAction() {
-    data class LoadData(val repoName: String, val userName: String): RepoFileAction()
+    data class LoadData(val repoName: String, val userName: String, val branch: String?): RepoFileAction()
     data class OnClickFile(val fileUIModel: FileUIModel, val userName: String, val repoName: String): RepoFileAction()
     data class OnClickPath(val pos: Int): RepoFileAction()
 }

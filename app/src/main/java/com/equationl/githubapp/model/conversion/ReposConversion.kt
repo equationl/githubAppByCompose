@@ -54,12 +54,15 @@ object ReposConversion {
 
 
         val createStr = if (repository != null && repository.fork)
-            "Forked from" + (repository.parent?.name ?: "") + "\n"
+            "Forked from" + (repository.parent?.name ?: "")
         else
-            "创建于" + CommonUtils.getDateStr(repository?.createdAt) + "\n"
+            "创建于" + CommonUtils.getDateStr(repository?.createdAt)
 
         reposUIModel.repositoryAction = createStr
         reposUIModel.repositoryIssue = repository?.openIssuesCount?.toString() ?: ""
+
+        reposUIModel.repositoryTopics = repository?.topics ?: listOf()
+        reposUIModel.repositoryLastUpdateTime = CommonUtils.getDateStr(repository?.pushedAt)
         return reposUIModel
     }
 

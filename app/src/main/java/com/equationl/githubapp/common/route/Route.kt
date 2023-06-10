@@ -16,6 +16,7 @@ object Route {
     const val IMAGE_PREVIEW = "imagePreview"
     const val NOTIFY = "notify"
     const val WELCOME = "welcome"
+    const val RELEASE_LIST = "releaseList"
 }
 
 object RouteParams {
@@ -29,4 +30,5 @@ object RouteParams {
     const val PAR_USER_NAME = "user_name"
     const val PAR_IMAGE_URL = "image_url"
     const val PAR_REPO_REQUEST_TYPE = "repo_request_type"
+    const val PAR_SEARCH_QUERY = "search_query"
 }

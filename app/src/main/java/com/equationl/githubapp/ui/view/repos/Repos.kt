@@ -55,6 +55,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import com.equationl.githubapp.model.bean.Branch
 import com.equationl.githubapp.ui.common.BaseEvent
 import com.equationl.githubapp.ui.common.MoreMenu
 import com.equationl.githubapp.ui.common.TopBar
@@ -79,10 +80,11 @@ fun RepoDetailScreen(
 ) {
     val context = LocalContext.current
     val viewState = viewModel.viewStates
-    val pagerState = rememberPagerState()
+    val pagerState = rememberPagerState(initialPage = 1)
     val scaffoldState = rememberBottomSheetScaffoldState()
     val coroutineScope = rememberCoroutineScope()
     val createIssueDialogState: MaterialDialogState = rememberMaterialDialogState(false)
+    val branchDialogState: MaterialDialogState = rememberMaterialDialogState(false)
 
     var pagerUserScrollEnabled by remember { mutableStateOf(true) }
 
@@ -96,6 +98,9 @@ fun RepoDetailScreen(
                 }
                 is ReposViewEvent.Goto -> {
                     navController.navigate(it.route)
+                }
+                is ReposViewEvent.ShowBranchDialog -> {
+                    branchDialogState.show()
                 }
             }
         }
@@ -119,7 +124,7 @@ fun RepoDetailScreen(
             var isShowDropMenu by remember { mutableStateOf(false) }
 
             TopBar(
-                 title = repoName ?: "NUll",
+                 title = getTitle(repoName, viewState.branch),
                  actions = {
                      IconButton(onClick = { isShowDropMenu = !isShowDropMenu}) {
                          Icon(Icons.Outlined.MoreHoriz, "More")
@@ -127,6 +132,7 @@ fun RepoDetailScreen(
 
                      MoreMenu(
                          isShow = isShowDropMenu,
+                         options = listOf("在浏览器中打开", "复制链接", "分享", "分支", "版本"),
                          onDismissRequest = { isShowDropMenu = false },
                          onClick =  {
                              viewModel.dispatch(ReposViewAction.ClickMoreMenu(context, it, repoOwner ?: "", repoName ?: ""))
@@ -175,13 +181,28 @@ fun RepoDetailScreen(
                 }
             )
 
-            MainContent(pagerState, navController, scaffoldState, repoName, repoOwner, pagerUserScrollEnabled)
+            MainContent(pagerState, navController, scaffoldState, repoName, repoOwner, viewState.branch, pagerUserScrollEnabled)
         }
 
         CreateIssueDialog(dialogState = createIssueDialogState, onPostDate = { tittle: String, content: String ->
             viewModel.dispatch(ReposViewAction.CreateIssue(repoOwner ?: "", repoName ?: "", tittle, content))
         })
+
+        ChoiceBranchDialog(dialogState = branchDialogState, dataList = viewState.branchList) {branch ->
+            viewModel.dispatch(ReposViewAction.OnChangeBranch(branch))
+        }
     }
+}
+
+private fun getTitle(repoName: String?, branch: String?): String {
+    var title = ""
+    if (!branch.isNullOrEmpty()) {
+        title += "[$branch]"
+    }
+
+    title += repoName ?: "NULL"
+
+    return title
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -192,6 +213,7 @@ private fun MainContent(
     scaffoldState: BottomSheetScaffoldState,
     repoName: String?,
     repoOwner: String?,
+    branch: String?,
     userScrollEnabled: Boolean
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -202,13 +224,13 @@ private fun MainContent(
         userScrollEnabled = userScrollEnabled
     ) { page ->
         when (page) {
-            0 -> ReposReadmeContent(userName = repoOwner ?: "", reposName = repoName ?: "", scaffoldState)
-            1 -> ReposActionContent(userName = repoOwner ?: "", reposName = repoName ?: "", scaffoldState, navController, onChangePager = {
+            0 -> ReposReadmeContent(userName = repoOwner ?: "", reposName = repoName ?: "", branch = branch, scaffoldState)
+            1 -> ReposActionContent(userName = repoOwner ?: "", reposName = repoName ?: "", branch = branch, scaffoldState, navController, onChangePager = {
                 coroutineScope.launch {
                     pagerState.animateScrollToPage(it.ordinal)
                 }
             })
-            2 -> ReposFileContent(userName = repoOwner ?: "", repoName = repoName ?: "", scaffoldState, navController)
+            2 -> ReposFileContent(userName = repoOwner ?: "", repoName = repoName ?: "", branch = branch, scaffoldState, navController)
             3 -> ReposIssueContent(userName = repoOwner ?: "", reposName = repoName ?: "", scaffoldState, navController)
         }
     }
@@ -258,7 +280,7 @@ private fun TabBar(
     ) {
         TabItem(
             isSelected = viewState.currentPage == ReposPager.Readme,
-            title = "详情信息",
+            title = "详情",
             onScrollTo = { onScrollTo(ReposPager.Readme) }
         )
 
@@ -294,6 +316,42 @@ private fun TabItem(
             .clickable(onClick = onScrollTo)) {
 
         Text(title, color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Unspecified)
+    }
+}
+
+@Composable
+private fun ChoiceBranchDialog(
+    dialogState: MaterialDialogState,
+    dataList: List<Branch>,
+    onClickItem: (branch: Branch) -> Unit
+) {
+    MaterialDialog(
+        dialogState = dialogState
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(32.dp)
+                .padding(vertical = 16.dp)
+        ) {
+            dataList.forEachIndexed { index, item ->
+                TextButton(onClick = {
+                    if (item.isClickAble) {
+                        dialogState.hide()
+                        onClickItem(item)
+                    }
+                }) {
+                    if (item.isBranch && !item.name.isNullOrEmpty()) {
+                        Text(text = item.name)
+                    }
+                }
+
+                if (index != dataList.lastIndex) {
+                    Divider(modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp))
+                }
+            }
+        }
     }
 }
 

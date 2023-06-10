@@ -10,6 +10,7 @@ import com.equationl.githubapp.common.utlis.CommonUtils
 import com.equationl.githubapp.common.utlis.browse
 import com.equationl.githubapp.common.utlis.copy
 import com.equationl.githubapp.common.utlis.share
+import com.equationl.githubapp.model.bean.Branch
 import com.equationl.githubapp.model.bean.Issue
 import com.equationl.githubapp.service.IssueService
 import com.equationl.githubapp.service.RepoService
@@ -38,6 +39,7 @@ class ReposViewModel @Inject constructor(
             is ReposViewAction.OnChangeStar -> onChangeStar(action.isStar, action.userName, action.repoName)
             is ReposViewAction.OnChangeWatch -> onChangeWatch(action.isWatch, action.userName,action.repoName)
             is ReposViewAction.CreateIssue -> createIssue(action.userName, action.repoName, action.title, action.content)
+            is ReposViewAction.OnChangeBranch -> onChangeBranch(action.branch)
         }
     }
 
@@ -53,6 +55,36 @@ class ReposViewModel @Inject constructor(
             }
             2 -> { // 分享
                 context.share(realUrl)
+            }
+            3 -> { // 分支
+                viewStates = viewStates.copy(branchList = listOf(
+                    Branch(name = "加载中...", isClickAble = false)
+                ))
+                loadBranchList(userName, repoName)
+                _viewEvents.trySend(ReposViewEvent.ShowBranchDialog)
+            }
+            4 -> { // 版本
+                _viewEvents.trySend(ReposViewEvent.Goto("${Route.RELEASE_LIST}/$userName/$repoName"))
+            }
+        }
+    }
+
+    private fun loadBranchList(userName: String, repoName: String) {
+        viewModelScope.launch(exception) {
+            val response = repoService.getBranches(userName, repoName)
+            if (response.isSuccessful) {
+                val body = response.body()
+                if (body != null) {
+                    viewStates = viewStates.copy(branchList = body)
+                }
+                else {
+                    viewStates = viewStates.copy(branchList = listOf(Branch(name = "加载失败", isClickAble = false)))
+                    _viewEvents.send(BaseEvent.ShowMsg("分支为空"))
+                }
+            }
+            else {
+                viewStates = viewStates.copy(branchList = listOf(Branch(name = "加载失败", isClickAble = false)))
+                _viewEvents.send(BaseEvent.ShowMsg("获取分支失败：${response.errorBody()?.string()}"))
             }
         }
     }
@@ -133,16 +165,23 @@ class ReposViewModel @Inject constructor(
             }
         }
     }
+
+    private fun onChangeBranch(branch: Branch) {
+        viewStates = viewStates.copy(branch = branch.name)
+    }
 }
 
 data class ReposViewState(
-    val currentPage: ReposPager = ReposPager.Readme,
+    val currentPage: ReposPager = ReposPager.Action,
     val isWatch: Boolean = false,
-    val isStar: Boolean = false
+    val isStar: Boolean = false,
+    val branch: String? = null,
+    val branchList: List<Branch> = listOf()
 )
 
 sealed class ReposViewEvent: BaseEvent() {
     data class Goto(val route: String): ReposViewEvent()
+    object ShowBranchDialog: ReposViewEvent()
 }
 
 sealed class ReposViewAction: BaseAction() {
@@ -153,6 +192,7 @@ sealed class ReposViewAction: BaseAction() {
     data class ScrollTo(val pager: ReposPager): ReposViewAction()
     data class ClickMoreMenu(val context: Context, val pos: Int, val userName: String, val repoName: String): ReposViewAction()
     data class CreateIssue(val userName: String, val repoName: String, val title: String, val content: String): ReposViewAction()
+    data class OnChangeBranch(val branch: Branch): ReposViewAction()
 }
 
 enum class ReposPager {
