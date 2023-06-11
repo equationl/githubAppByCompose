@@ -63,8 +63,7 @@ class MainViewModel @Inject constructor(
                         val versionName = item.name
                         versionName?.apply {
                             val currentName = context.getVersionName()
-                            val hadNew = currentName.compareVersion(versionName) != currentName
-                            if (hadNew) {
+                            if (currentName.compareVersion(versionName)) {
                                 // 有更新
                                 _viewEvents.trySend(MainViewEvent.HadUpdate(item.body ?: "新版本"))
                             }

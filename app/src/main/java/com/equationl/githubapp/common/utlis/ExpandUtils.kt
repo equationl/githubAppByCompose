@@ -39,8 +39,8 @@ fun List<String>.toSplitString(): String {
 /**
  * 版本号对比
  */
-fun String.compareVersion(v2: String?): String? {
-    if (v2.isNullOrEmpty()) return null
+fun String.compareVersion(v2: String?): Boolean {
+    if (v2.isNullOrEmpty()) return false
     val regEx = "[^0-9]"
     val p = Pattern.compile(regEx)
     var s1: String = p.matcher(this).replaceAll("").trim()
@@ -65,6 +65,5 @@ fun String.compareVersion(v2: String?): String? {
     val s1Int = s1.toInt()
     val s2Int = s2.toInt()
 
-    return if (s1Int > s2Int) this
-    else v2
+    return s2Int > s1Int
 }

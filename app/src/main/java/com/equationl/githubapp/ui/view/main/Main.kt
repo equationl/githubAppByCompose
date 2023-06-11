@@ -61,6 +61,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -110,6 +111,7 @@ fun MainScreen(
                 }
                 is BaseEvent.ShowMsg -> {
                     launch {
+                        drawerState.close()
                         scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
                     }
                 }
@@ -276,12 +278,12 @@ private fun MainDrawerContent(
             )
         }
 
-        Column {
+        Column(modifier = Modifier.width(232.dp)) {
             TextButton(onClick = { editDialogState.show() }) {
-                Text(text = "用户反馈")
+                Text(text = "用户反馈", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start)
             }
             TextButton(onClick = { navController.navigate(Route.USER_INFO) }) {
-                Text(text = "个人信息")
+                Text(text = "个人信息", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start)
             }
             TextButton(onClick = {
                 viewModel.dispatch(MainViewAction.CheckUpdate(
@@ -290,22 +292,22 @@ private fun MainDrawerContent(
                     context = context
                 ))
             }) {
-                Text(text = "版本更新")
+                Text(text = "版本更新", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start)
             }
             TextButton(onClick = {
                 context.browse("https://github.com/equationl/githubAppByCompose")
             }) {
-                Text(text = "应用关于")
+                Text(text = "应用关于", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start)
             }
             TextButton(onClick = {
                 viewModel.dispatch(MainViewAction.ClearCache(context))
             }) {
-                Text(text = "清除缓存")
+                Text(text = "清除缓存", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start)
             }
             TextButton(onClick = {
                 logoutDialogState.show()
             }) {
-                Text(text = "退出登陆", color = Color.Red)
+                Text(text = "退出登陆", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start, color = Color.Red)
             }
         }
     }
