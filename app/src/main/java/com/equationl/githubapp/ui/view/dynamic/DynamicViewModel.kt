@@ -48,6 +48,7 @@ open class DynamicViewModel @Inject constructor(
             is DynamicViewAction.ShowMsg -> { _viewEvents.trySend(BaseEvent.ShowMsg(action.msg)) }
             is DynamicViewAction.ClickItem -> clickItem(action.eventUIModel)
             is DynamicViewAction.SetData -> setData(action.userName)
+            is DynamicViewAction.TopOrRefresh -> topOrRefresh()
         }
     }
 
@@ -80,15 +81,12 @@ open class DynamicViewModel @Inject constructor(
         when (eventUIModel.actionType) {
             EventUIAction.Person -> {
                 _viewEvents.trySend(DynamicViewEvent.Goto("${Route.PERSON_DETAIL}/${eventUIModel.owner}"))
-                // PersonActivity.gotoPersonInfo(eventUIModel.owner)
             }
             EventUIAction.Repos -> {
                 _viewEvents.trySend(DynamicViewEvent.Goto("${Route.REPO_DETAIL}/${eventUIModel.repositoryName}/${eventUIModel.owner}"))
-                // ReposDetailActivity.gotoReposDetail(eventUIModel.owner, eventUIModel.repositoryName)
             }
             EventUIAction.Issue -> {
                 _viewEvents.trySend(DynamicViewEvent.Goto("${Route.ISSUE_DETAIL}/${eventUIModel.repositoryName}/${eventUIModel.owner}/${eventUIModel.IssueNum}"))
-                // IssueDetailActivity.gotoIssueDetail(eventUIModel.owner, eventUIModel.repositoryName, eventUIModel.IssueNum)
             }
             EventUIAction.Push -> {
                 if (eventUIModel.pushSha.size == 1) {
@@ -107,19 +105,15 @@ open class DynamicViewModel @Inject constructor(
                         pushShaDesList = eventUIModel.pushShaDes
                     )
                 }
-                /*if (eventUIModel.pushSha.size == 1) {
-                    PushDetailActivity.gotoPushDetail(eventUIModel.owner, eventUIModel.repositoryName, eventUIModel.pushSha[0])
-                } else {
-                    context?.showOptionSelectDialog(eventUIModel.pushShaDes, OnItemClickListener { dialog, _, _, position ->
-                        dialog.dismiss()
-                        PushDetailActivity.gotoPushDetail(eventUIModel.owner, eventUIModel.repositoryName, eventUIModel.pushSha[position])
-                    })
-                }*/
             }
             EventUIAction.Release -> {
                 _viewEvents.trySend(DynamicViewEvent.Goto("${Route.REPO_DETAIL}/${eventUIModel.repositoryName}/${eventUIModel.owner}"))
             }
         }
+    }
+
+    private fun topOrRefresh() {
+        _viewEvents.trySend(DynamicViewEvent.TopOrRefresh)
     }
 }
 
@@ -132,10 +126,12 @@ data class DynamicViewState(
 )
 
 sealed class DynamicViewEvent: BaseEvent() {
+    object TopOrRefresh: DynamicViewEvent()
     data class Goto(val route: String): DynamicViewEvent()
 }
 
 sealed class DynamicViewAction: BaseAction() {
+    object TopOrRefresh: DynamicViewAction()
     data class ShowMsg(val msg: String): DynamicViewAction()
     data class ClickItem(val eventUIModel: EventUIModel): DynamicViewAction()
     data class SetData(val userName: String): DynamicViewAction()

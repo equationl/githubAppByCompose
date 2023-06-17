@@ -229,13 +229,13 @@ interface RepoService {
     ):Response<List<TrendingRepoModel>>
 
     @GET("repos/{owner}/{repo}/readme")
-    @Headers("Content-Type: text/plain;charset=utf-8", "Accept: application/vnd.github.html")
-    suspend fun getReadmeHtml(
+    // @Headers("Content-Type: text/plain;charset=utf-8", "Accept: application/vnd.github.html")
+    suspend fun getReadme(
             @Header("forceNetWork") forceNetWork: Boolean,
             @Path("owner") owner: String,
             @Path("repo") repo: String,
             @Query("ref") branch: String? = null
-    ):Response<String>
+    ):Response<FileModel>
 
 
     @GET("repos/{owner}/{repo}/contents/{path}")

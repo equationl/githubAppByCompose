@@ -48,7 +48,7 @@ class ReleaseViewModel @Inject constructor(
     }
 
     private fun clickMoreMenu(context: Context, pos: Int, userName: String, repoName: String) {
-        val realUrl = CommonUtils.getReposHtmlUrl(userName, repoName)
+        val realUrl = CommonUtils.getReleaseHtmlUrl(userName, repoName)
         when (pos) {
             0 -> { // 在浏览器中打开
                 context.browse(realUrl)

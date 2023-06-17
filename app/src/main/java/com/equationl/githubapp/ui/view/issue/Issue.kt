@@ -56,6 +56,7 @@ import com.equationl.githubapp.ui.common.BaseRefreshPaging
 import com.equationl.githubapp.ui.common.MoreMenu
 import com.equationl.githubapp.ui.common.TopBar
 import com.equationl.githubapp.ui.common.comPlaceholder
+import com.equationl.githubapp.ui.theme.getRichTextStyle
 import com.halilibo.richtext.markdown.Markdown
 import com.halilibo.richtext.markdown.MarkdownParseOptions
 import com.halilibo.richtext.ui.material3.Material3RichText
@@ -429,16 +430,22 @@ private fun CommentItem(
                         isRefresh = isRefresh
                     )
 
-                    Text(text = issueUIModel.username, modifier = Modifier.padding(start = 4.dp).comPlaceholder(isRefresh))
+                    Text(text = issueUIModel.username, modifier = Modifier
+                        .padding(start = 4.dp)
+                        .comPlaceholder(isRefresh))
                 }
 
                 Text(text = issueUIModel.time, modifier = Modifier.comPlaceholder(isRefresh))
             }
 
-            Material3RichText(modifier = Modifier.padding(start = 30.dp).comPlaceholder(isRefresh)) {
+            Material3RichText(modifier = Modifier
+                .padding(start = 30.dp)
+                .comPlaceholder(isRefresh),
+                style = getRichTextStyle()
+            ) {
                 Markdown(
                     content = issueUIModel.action,
-                    markdownParseOptions = MarkdownParseOptions.Default.copy(autolink = false, imgFillMaxWidth = true),
+                    markdownParseOptions = MarkdownParseOptions.Default.copy(autolink = false),
                     onImgClicked = {
                         navController.navigate("${Route.IMAGE_PREVIEW}/${Uri.encode(it)}")
                     }
@@ -501,10 +508,10 @@ private fun Header(
                     .fillMaxWidth()
                     .padding(top = 6.dp)
             ) {
-                Material3RichText {
+                Material3RichText(style = getRichTextStyle()) {
                     Markdown(
                         content = issueUIModel.content,
-                        markdownParseOptions = MarkdownParseOptions.Default.copy(autolink = false, imgFillMaxWidth = true),
+                        markdownParseOptions = MarkdownParseOptions.Default.copy(autolink = false),
                         onImgClicked = {
                             navController.navigate("${Route.IMAGE_PREVIEW}/${Uri.encode(it)}")
                         }

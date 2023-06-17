@@ -4,18 +4,38 @@ package com.equationl.githubapp.model.bean
 import com.google.gson.annotations.SerializedName
 
 
-class FileModel {
-    var name: String? = null
-    var path: String? = null
-    var sha: String? = null
-    var size: Int = 0
-    var url: String? = null
-    @SerializedName("html_url")
-    var htmlUrl: String? = null
-    @SerializedName("git_url")
-    var gitUrl: String? = null
+data class FileModel(
+    @SerializedName("content")
+    val content: String?,
     @SerializedName("download_url")
-    var downloadUrl: String? = null
+    val downloadUrl: String?,
+    @SerializedName("encoding")
+    val encoding: String?,
+    @SerializedName("git_url")
+    val gitUrl: String?,
+    @SerializedName("html_url")
+    val htmlUrl: String?,
+    @SerializedName("_links")
+    val links: Links?,
+    @SerializedName("name")
+    val name: String?,
+    @SerializedName("path")
+    val path: String?,
+    @SerializedName("sha")
+    val sha: String?,
+    @SerializedName("size")
+    val size: Int?,
     @SerializedName("type")
-    var type: String? = null
-}
+    val type: String?,
+    @SerializedName("url")
+    val url: String?
+)
+
+data class Links(
+    @SerializedName("git")
+    val git: String?,
+    @SerializedName("html")
+    val html: String?,
+    @SerializedName("self")
+    val self: String?
+)

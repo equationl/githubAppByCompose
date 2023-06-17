@@ -5,6 +5,8 @@ import android.net.Uri
 import android.view.MotionEvent
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CorporateFare
 import androidx.compose.material.icons.filled.Link
@@ -232,17 +234,40 @@ private fun PersonDynamic(
 ) {
     val personViewState = viewModel.personViewState
     val viewState = viewModel.viewStates
+    val lazyListState: LazyListState = rememberLazyListState()
+
 
     val dynamicList = viewState.dynamicFlow?.collectAsLazyPagingItems()
+
+    LaunchedEffect(dynamicList) {
+        viewModel.viewEvents.collect {
+            when (it) {
+                is PersonEvent.TopOrRefresh -> {
+                    if (lazyListState.firstVisibleItemIndex == 0) {
+                        // refresh
+                        dynamicList?.refresh()
+                    }
+                    else {
+                        // scroll to top
+                        lazyListState.animateScrollToItem(0)
+                    }
+                }
+            }
+        }
+    }
 
     if (dynamicList?.itemCount == 0 && viewModel.isInit && viewState.cacheList.isNullOrEmpty()) {
         return
     }
 
+    var isScrollEnable by remember { mutableStateOf(true) }
+
     EventRefreshContent(
         navHostController = navController,
         eventPagingItems = dynamicList,
         cacheList = viewState.cacheList,
+        isScrollEnable = isScrollEnable,
+        lazyListState = lazyListState,
         onLoadError = {
             viewModel.dispatch(DynamicViewAction.ShowMsg(it))
         },
@@ -255,7 +280,10 @@ private fun PersonDynamic(
                     user = personViewState.user,
                     navController = navController,
                     isLoginUser = isLoginUser,
-                    onEnablePagerScroll = onEnablePagerScroll,
+                    onEnablePagerScroll = {
+                        isScrollEnable = it
+                        onEnablePagerScroll?.invoke(it)
+                    },
                 )
             }
         },

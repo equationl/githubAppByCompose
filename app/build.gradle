@@ -13,8 +13,8 @@ android {
         applicationId "com.equationl.githubapp"
         minSdk 24
         targetSdk 33
-        versionCode 1
-        versionName "0.0.2"
+        versionCode 3
+        versionName "0.0.3"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -89,6 +89,7 @@ dependencies {
     implementation "com.google.accompanist:accompanist-permissions:$accompanist_version"
 
     implementation "io.coil-kt:coil-compose:2.4.0"
+    implementation "io.coil-kt:coil-svg:2.4.0"
 
     // FIXME 在 PR 未被合并之前，暂时只能这样
     // implementation "com.halilibo.compose-richtext:richtext-commonmark:0.16.0"

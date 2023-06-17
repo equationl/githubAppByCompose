@@ -120,12 +120,13 @@ private fun NotifyContent(
     onRefresh: (() -> Unit)? = null
 ) {
     EventRefreshContent(
-        navHostController,
-        eventPagingItems,
-        null,
-        onLoadError,
-        onClickItem,
-        headerItem, onRefresh
+        navHostController = navHostController,
+        eventPagingItems = eventPagingItems,
+        cacheList = null,
+        onLoadError = onLoadError,
+        onClickItem = onClickItem,
+        headerItem = headerItem,
+        onRefresh = onRefresh
     )
 }
 

@@ -41,6 +41,7 @@ class PersonViewModel @Inject constructor(
             is PersonAction.GetUser -> getUser(action.user)
             is PersonAction.ClickMoreMenu -> clickMoreMenu(action.context, action.pos, action.user)
             is PersonAction.ChangeFollowState -> changeFollowState()
+            PersonAction.TopOrRefresh -> topOrRefresh()
         }
     }
 
@@ -134,6 +135,10 @@ class PersonViewModel @Inject constructor(
             }
         }
     }
+
+    private fun topOrRefresh() {
+        _viewEvents.trySend(PersonEvent.TopOrRefresh)
+    }
 }
 
 data class PersonViewState(
@@ -145,6 +150,11 @@ sealed class PersonAction {
     data class GetUser(val user: String) : PersonAction()
     data class ClickMoreMenu(val context: Context, val pos: Int, val user: String): PersonAction()
     object ChangeFollowState: PersonAction()
+    object TopOrRefresh: PersonAction()
+}
+
+sealed class PersonEvent: BaseEvent() {
+    object TopOrRefresh: PersonEvent()
 }
 
 enum class IsFollow {

@@ -1,15 +1,21 @@
 package com.equationl.githubapp.ui.view.repos.readme
 
+import android.net.Uri
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BottomSheetScaffoldState
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.equationl.githubapp.ui.common.CustomWebView
+import androidx.navigation.NavHostController
+import com.equationl.githubapp.common.route.Route
+import com.equationl.githubapp.ui.theme.getRichTextStyle
+import com.halilibo.richtext.markdown.Markdown
+import com.halilibo.richtext.ui.material3.Material3RichText
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -19,10 +25,9 @@ fun ReposReadmeContent(
     reposName: String,
     branch: String?,
     scaffoldState: BottomSheetScaffoldState,
+    navController: NavHostController,
     viewModel: RepoReadmeViewModel = hiltViewModel()
 ) {
-    val backgroundColor = MaterialTheme.colorScheme.background
-    val primaryColor = MaterialTheme.colorScheme.primary
 
     LaunchedEffect(Unit) {
         viewModel.viewEvents.collect {
@@ -37,16 +42,25 @@ fun ReposReadmeContent(
     }
 
     LaunchedEffect(branch) {
-        viewModel.dispatch(RepoReadMeAction.GetReadmeContent(reposName, userName, branch, backgroundColor, primaryColor))
+        viewModel.dispatch(RepoReadMeAction.GetReadmeContent(reposName, userName, branch))
     }
 
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        CustomWebView(
-            url = "",
-            htmlContent = viewModel.viewStates.readmeContent,
-            onBack = {}
-        )
+    Column(modifier = Modifier
+        .fillMaxSize()
+        .verticalScroll(rememberScrollState())
+    ) {
+        Material3RichText(
+            style = getRichTextStyle(),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Markdown(
+                content = viewModel.viewStates.readmeContent,
+                onImgClicked = {
+                    navController.navigate("${Route.IMAGE_PREVIEW}/${Uri.encode(it)}")
+                }
+            )
+        }
     }
 
 }

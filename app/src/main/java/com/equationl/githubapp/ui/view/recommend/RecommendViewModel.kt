@@ -45,6 +45,7 @@ class RecommendViewModel @Inject constructor(
             is RecommendAction.RefreshData -> refreshData(action.forceRefresh)
             is RecommendAction.ChangeLanguage -> changeLanguage(action.languageFilter)
             is RecommendAction.ChangeSinceFilter -> changeSince(action.sinceFilter)
+            RecommendAction.TopOrRefresh -> topOrRefresh()
         }
     }
 
@@ -106,6 +107,10 @@ class RecommendViewModel @Inject constructor(
             }
         }
     }
+
+    private fun topOrRefresh() {
+        _viewEvents.trySend(RecommendEvent.TopOrRefresh)
+    }
 }
 
 data class RecommendState(
@@ -117,9 +122,14 @@ data class RecommendState(
 )
 
 sealed class RecommendAction: BaseAction() {
+    object TopOrRefresh: RecommendAction()
     data class RefreshData(val forceRefresh: Boolean) : RecommendAction()
     data class ChangeSinceFilter(val sinceFilter: RecommendSinceFilter) : RecommendAction()
     data class ChangeLanguage(val languageFilter: LanguageFilter) : RecommendAction()
+}
+
+sealed class RecommendEvent: BaseEvent() {
+    object TopOrRefresh: RecommendEvent()
 }
 
 enum class RecommendSinceFilter(val showName: String, val requestValue: String) {

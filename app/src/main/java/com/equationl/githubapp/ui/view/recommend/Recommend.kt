@@ -2,6 +2,8 @@ package com.equationl.githubapp.ui.view.recommend
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -27,12 +29,24 @@ fun RecommendContent(
 ) {
     val viewState = viewModel.viewStates
 
+    val lazyListState: LazyListState = rememberLazyListState()
+
     LaunchedEffect(Unit) {
         viewModel.viewEvents.collect {
             when (it) {
                 is BaseEvent.ShowMsg -> {
                     launch {
                         scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
+                    }
+                }
+                is RecommendEvent.TopOrRefresh -> {
+                    if (lazyListState.firstVisibleItemIndex == 0) {
+                        // refresh
+                        viewModel.dispatch(RecommendAction.RefreshData(true))
+                    }
+                    else {
+                        // scroll to top
+                        lazyListState.animateScrollToItem(0)
                     }
                 }
             }
@@ -53,6 +67,7 @@ fun RecommendContent(
 
         RecommendRefreshContent(
             isRefreshing = viewState.isRefreshing,
+            lazyListState = lazyListState,
             dataList = viewState.dataList,
             cacheList = viewState.cacheDataList,
             navController = navController
@@ -131,6 +146,7 @@ private fun <T>FilterDropMenu(
 @Composable
 private fun RecommendRefreshContent(
     isRefreshing: Boolean,
+    lazyListState: LazyListState,
     dataList: List<ReposUIModel>,
     navController: NavHostController,
     cacheList: List<ReposUIModel>? = null,
@@ -141,6 +157,7 @@ private fun RecommendRefreshContent(
         isRefresh = isRefreshing,
         itemList = dataList,
         cacheItemList = cacheList,
+        lazyListState = lazyListState,
         itemUi = {
             RepoItem(it, isRefreshing, navController) {
                 navController.navigate("${Route.REPO_DETAIL}/${it.repositoryName}/${it.ownerName}")

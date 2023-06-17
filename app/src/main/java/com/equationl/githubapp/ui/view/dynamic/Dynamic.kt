@@ -3,6 +3,8 @@ package com.equationl.githubapp.ui.view.dynamic
 import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,7 +42,11 @@ fun DynamicContent(
 ) {
     val viewState = viewModel.viewStates
 
-    LaunchedEffect(Unit) {
+    val dynamicList = viewState.dynamicFlow?.collectAsLazyPagingItems()
+
+    val lazyListState = rememberLazyListState()
+
+    LaunchedEffect(dynamicList) {
         viewModel.viewEvents.collect {
             when (it) {
                 is BaseEvent.ShowMsg -> {
@@ -51,6 +57,16 @@ fun DynamicContent(
                 is DynamicViewEvent.Goto -> {
                     navController.navigate(it.route)
                 }
+                is DynamicViewEvent.TopOrRefresh -> {
+                    if (lazyListState.firstVisibleItemIndex == 0) {
+                        // refresh
+                        dynamicList?.refresh()
+                    }
+                    else {
+                        // scroll to top
+                        lazyListState.animateScrollToItem(0)
+                    }
+                }
             }
         }
     }
@@ -60,7 +76,6 @@ fun DynamicContent(
         viewModel.dispatch(DynamicViewAction.SetData((userInfo?.login) ?: ""))
     }
 
-    val dynamicList = viewState.dynamicFlow?.collectAsLazyPagingItems()
     if (dynamicList?.itemCount == 0 && viewModel.isInit && viewState.cacheList.isNullOrEmpty()) {
         return
     }
@@ -69,6 +84,7 @@ fun DynamicContent(
         navHostController = navController,
         eventPagingItems = dynamicList,
         cacheList = viewState.cacheList,
+        lazyListState = lazyListState,
         onLoadError = {
             viewModel.dispatch(DynamicViewAction.ShowMsg(it))
         },
@@ -89,6 +105,8 @@ fun EventRefreshContent(
     navHostController: NavHostController,
     eventPagingItems: LazyPagingItems<EventUIModel>?,
     cacheList: List<EventUIModel>? = null,
+    isScrollEnable: Boolean = true,
+    lazyListState: LazyListState = rememberLazyListState(),
     onLoadError: (msg: String) -> Unit,
     onClickItem: (eventUiModel: EventUIModel) -> Unit,
     headerItem: (LazyListScope.() -> Unit)? = null,
@@ -112,6 +130,8 @@ fun EventRefreshContent(
                 }
             }
         },
+        isScrollEnable = isScrollEnable,
+        lazyListState = lazyListState,
         onLoadError = onLoadError,
         onClickItem = {},
         headerItem = headerItem,
@@ -149,7 +169,9 @@ private fun EventItem(
 
                     Text(
                         text = userName,
-                        modifier = Modifier.padding(start = 8.dp).comPlaceholder(isRefresh),
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .comPlaceholder(isRefresh),
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -160,7 +182,7 @@ private fun EventItem(
             Material3RichText(modifier = Modifier.comPlaceholder(isRefresh)) {
                 Markdown(
                     content = action + if (des.isNotBlank()) " : " else "",
-                    markdownParseOptions = MarkdownParseOptions(autolink = false, imgFillMaxWidth = true),
+                    markdownParseOptions = MarkdownParseOptions(autolink = false),
                     onImgClicked = {
                         navHostController.navigate("${Route.IMAGE_PREVIEW}/${Uri.encode(it)}")
                     }
@@ -168,10 +190,12 @@ private fun EventItem(
             }
 
             if (des.isNotBlank()) {
-                Material3RichText(modifier = Modifier.padding(top = 8.dp).comPlaceholder(isRefresh)) {
+                Material3RichText(modifier = Modifier
+                    .padding(top = 8.dp)
+                    .comPlaceholder(isRefresh)) {
                     Markdown(
                         content = des,
-                        markdownParseOptions = MarkdownParseOptions.Default.copy(autolink = false, imgFillMaxWidth = true),
+                        markdownParseOptions = MarkdownParseOptions.Default.copy(autolink = false),
                         onImgClicked = {
                             navHostController.navigate("${Route.IMAGE_PREVIEW}/${Uri.encode(it)}")
                         }

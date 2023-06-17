@@ -5,6 +5,9 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -34,6 +37,7 @@ import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.BottomSheetScaffoldState
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -74,8 +78,14 @@ import com.equationl.githubapp.ui.common.BaseAction
 import com.equationl.githubapp.ui.common.BaseEvent
 import com.equationl.githubapp.ui.common.HomeTopBar
 import com.equationl.githubapp.ui.view.dynamic.DynamicContent
+import com.equationl.githubapp.ui.view.dynamic.DynamicViewAction
+import com.equationl.githubapp.ui.view.dynamic.DynamicViewModel
 import com.equationl.githubapp.ui.view.my.MyContent
+import com.equationl.githubapp.ui.view.person.PersonAction
+import com.equationl.githubapp.ui.view.person.PersonViewModel
+import com.equationl.githubapp.ui.view.recommend.RecommendAction
 import com.equationl.githubapp.ui.view.recommend.RecommendContent
+import com.equationl.githubapp.ui.view.recommend.RecommendViewModel
 import com.equationl.githubapp.util.datastore.DataKey
 import com.equationl.githubapp.util.datastore.DataStoreUtils
 import com.equationl.githubapp.util.fromJson
@@ -91,10 +101,13 @@ import kotlinx.coroutines.withContext
 fun MainScreen(
     navController: NavHostController,
     onFinish: () -> Unit,
-    viewModel: MainViewModel = hiltViewModel()
+    mainViewModel: MainViewModel = hiltViewModel(),
+    dynamicViewModel: DynamicViewModel = hiltViewModel(),
+    recommendViewModel: RecommendViewModel = hiltViewModel(),
+    personViewModel: PersonViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val viewState = viewModel.viewStates
+    val viewState = mainViewModel.viewStates
     val pagerState = rememberPagerState()
     val scaffoldState = rememberBottomSheetScaffoldState()
     val coroutineScope = rememberCoroutineScope()
@@ -104,7 +117,7 @@ fun MainScreen(
     val updateDialogState: MaterialDialogState = rememberMaterialDialogState(false)
 
     LaunchedEffect(Unit) {
-        viewModel.viewEvents.collect {
+        mainViewModel.viewEvents.collect {
             when (it) {
                 is MainViewEvent.Goto -> {
                     navController.navigate(it.route)
@@ -127,13 +140,13 @@ fun MainScreen(
     LaunchedEffect(pagerState) {
         withContext(Dispatchers.IO) {
             snapshotFlow { pagerState.currentPage }.collect { page ->
-                viewModel.dispatch(MainViewAction.ScrollTo(MainPager.values()[page]))
+                mainViewModel.dispatch(MainViewAction.ScrollTo(MainPager.values()[page]))
             }
         }
     }
 
     LaunchedEffect(Unit) {
-        viewModel.dispatch(MainViewAction.CheckUpdate(
+        mainViewModel.dispatch(MainViewAction.CheckUpdate(
             showTip = false,
             forceRequest = false,
             context = context
@@ -150,7 +163,7 @@ fun MainScreen(
         else {
             if (System.currentTimeMillis() - lastClickTime > 2000) {
                 lastClickTime = System.currentTimeMillis()
-                viewModel.dispatch(BaseAction.ShowMag("再按一次退出"))
+                mainViewModel.dispatch(BaseAction.ShowMag("再按一次退出"))
             }
             else {
                 onFinish()
@@ -163,7 +176,7 @@ fun MainScreen(
         drawerContent = {
             MainDrawerContent(
                 user = userInfo ?: User(),
-                viewModel = viewModel,
+                viewModel = mainViewModel,
                 navController = navController
             )
         },
@@ -193,7 +206,22 @@ fun MainScreen(
                     viewState,
                     onScrollTo = {
                         coroutineScope.launch {
-                            pagerState.animateScrollToPage(it.ordinal)
+                            if (it == viewState.currentPage) { // 点击的是当前页面的按钮，回到顶部或刷新
+                                when (it) {
+                                    MainPager.HOME_DYNAMIC -> {
+                                        dynamicViewModel.dispatch(DynamicViewAction.TopOrRefresh)
+                                    }
+                                    MainPager.HOME_RECOMMEND -> {
+                                        recommendViewModel.dispatch(RecommendAction.TopOrRefresh)
+                                    }
+                                    MainPager.HOME_MY -> {
+                                        personViewModel.dispatch(PersonAction.TopOrRefresh)
+                                    }
+                                }
+                            }
+                            else { // 点击的不是当前页面的按钮，跳转到点击的页面
+                                pagerState.animateScrollToPage(it.ordinal)
+                            }
                         }
                     }
                 )
@@ -209,8 +237,16 @@ fun MainScreen(
                     .fillMaxSize()
                     .padding(it)
             ) {
-                MainContent(pagerState, navController, scaffoldState, viewState.gesturesEnabled) {enable ->
-                    viewModel.dispatch(MainViewAction.ChangeGesturesEnabled(enable))
+                MainContent(
+                    pagerState,
+                    drawerState,
+                    navController,
+                    scaffoldState,
+                    viewState.gesturesEnabled,
+                    dynamicViewModel,
+                    recommendViewModel
+                ) { enable ->
+                    mainViewModel.dispatch(MainViewAction.ChangeGesturesEnabled(enable))
                 }
             }
 
@@ -223,21 +259,43 @@ fun MainScreen(
 @Composable
 private fun MainContent(
     pagerState: PagerState,
+    drawerState: DrawerState,
     navController: NavHostController,
     scaffoldState: BottomSheetScaffoldState,
     gesturesEnabled: Boolean,
+    dynamicViewModel: DynamicViewModel = hiltViewModel(),
+    recommendViewModel: RecommendViewModel = hiltViewModel(),
+    personViewModel: PersonViewModel = hiltViewModel(),
     onChangeGesturesEnabled: (enable: Boolean) -> Unit
 ) {
+    val coroutineScope = rememberCoroutineScope()
+
     HorizontalPager(
         pageCount = 3,
         state = pagerState,
         beyondBoundsPageCount = 2,
-        userScrollEnabled = gesturesEnabled
+        userScrollEnabled = gesturesEnabled && pagerState.currentPage != 0,
+        modifier = Modifier.draggable(state = rememberDraggableState {
+            if (drawerState.isClosed && !drawerState.isAnimationRunning) {
+                if (it >= 5f) {
+                    coroutineScope.launch {
+                        drawerState.open()
+                    }
+                }
+                else if (it < -5f && pagerState.canScrollForward && !pagerState.isScrollInProgress){
+                    coroutineScope.launch {
+                        pagerState.animateScrollToPage(1)
+                    }
+                }
+            }
+        },
+        orientation = Orientation.Horizontal,
+        enabled = pagerState.currentPage == 0)
     ) { page ->
         when (page) {
-            0 -> DynamicContent(scaffoldState, navController)
-            1 -> RecommendContent(scaffoldState, navController)
-            2 -> MyContent(scaffoldState, navController) {
+            0 -> DynamicContent(scaffoldState, navController, dynamicViewModel)
+            1 -> RecommendContent(scaffoldState, navController, recommendViewModel)
+            2 -> MyContent(scaffoldState, navController, personViewModel) {
                 onChangeGesturesEnabled(it)
             }
         }
@@ -478,7 +536,7 @@ private fun BottomBar(
                 title = "动态",
                 iconUnselect = Icons.Outlined.DynamicFeed,
                 iconSelect = Icons.Filled.DynamicFeed,
-                onScrollTo = { onScrollTo(MainPager.HOME_DYNAMIC) }
+                onClick = { onScrollTo(MainPager.HOME_DYNAMIC) }
             )
 
             Spacer(Modifier.weight(1f, true))
@@ -488,7 +546,7 @@ private fun BottomBar(
                 title = "推荐",
                 iconUnselect = Icons.Outlined.Recommend,
                 iconSelect = Icons.Filled.Recommend,
-                onScrollTo = { onScrollTo(MainPager.HOME_RECOMMEND) }
+                onClick = { onScrollTo(MainPager.HOME_RECOMMEND) }
             )
 
             Spacer(Modifier.weight(1f, true))
@@ -498,7 +556,7 @@ private fun BottomBar(
                 title = "我的",
                 iconUnselect = Icons.Outlined.Person,
                 iconSelect = Icons.Filled.Person,
-                onScrollTo = { onScrollTo(MainPager.HOME_MY) }
+                onClick = { onScrollTo(MainPager.HOME_MY) }
             )
 
         }
@@ -511,12 +569,12 @@ fun RowScope.BottomItem(
     title: String,
     iconUnselect: ImageVector,
     iconSelect: ImageVector,
-    onScrollTo: () -> Unit
+    onClick: () -> Unit
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier = Modifier
-            .clickable(onClick = onScrollTo)
+            .clickable(onClick = onClick)
             .fillMaxWidth()
             .weight(1f)) {
         Icon(

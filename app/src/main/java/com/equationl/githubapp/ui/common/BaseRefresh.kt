@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,6 +31,7 @@ fun <T: BaseUIModel>BaseRefresh(
     isRefresh: Boolean,
     itemList: List<T>,
     cacheItemList: List<T>? = null,
+    lazyListState: LazyListState = rememberLazyListState(),
     itemUi: @Composable ColumnScope.(data: T) -> Unit,
     onRefresh: () -> Unit,
     onClickItem: (item: T) -> Unit,
@@ -46,6 +49,7 @@ fun <T: BaseUIModel>BaseRefresh(
         BaseRefreshLazyColumn(
             itemList = itemList,
             cacheItemList = cacheItemList,
+            lazyListState = lazyListState,
             itemUi = itemUi,
             onClickFileItem = onClickItem,
             headerItem = headerItem,
@@ -57,12 +61,14 @@ fun <T: BaseUIModel>BaseRefresh(
 private fun <T: BaseUIModel>BaseRefreshLazyColumn(
     itemList: List<T>,
     cacheItemList: List<T>? = null,
+    lazyListState: LazyListState = rememberLazyListState(),
     itemUi: @Composable ColumnScope.(data: T) -> Unit,
     onClickFileItem: (fileUiModel: T) -> Unit,
     headerItem: (LazyListScope.() -> Unit)? = null,
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
+        state = lazyListState
     ) {
         headerItem?.let {
             headerItem()
@@ -86,6 +92,8 @@ private fun <T: BaseUIModel>BaseRefreshLazyColumn(
 fun <T : BaseUIModel>BaseRefreshPaging(
     pagingItems: LazyPagingItems<T>?,
     cacheItems: List<T>? = null,
+    isScrollEnable: Boolean = true,
+    lazyListState: LazyListState = rememberLazyListState(),
     itemUi: @Composable ColumnScope.(data: T, isRefresh: Boolean) -> Unit,
     onLoadError: (msg: String) -> Unit,
     onClickItem: (eventUiModel: T) -> Unit,
@@ -114,13 +122,16 @@ fun <T : BaseUIModel>BaseRefreshPaging(
             pagingItems?.refresh()
             isInitiativeRefresh = true
         },
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
+        swipeEnabled = isScrollEnable
     ) {
         BasePagingLazyColumn(
             pagingItems = pagingItems,
             cacheItems = cacheItems,
             itemUi = itemUi,
             isRefresh = isInitiativeRefresh,
+            isScrollEnable = isScrollEnable,
+            lazyListState = lazyListState,
             onClickItem = onClickItem,
             emptyItem = emptyItem,
             headerItem = headerItem
@@ -133,15 +144,19 @@ private fun <T: BaseUIModel>BasePagingLazyColumn(
     pagingItems: LazyPagingItems<T>?,
     cacheItems: List<T>? = null,
     isRefresh: Boolean,
+    isScrollEnable: Boolean = true,
+    lazyListState: LazyListState = rememberLazyListState(),
     itemUi: @Composable ColumnScope.(data: T, isRefresh: Boolean) -> Unit,
     onClickItem: (eventUiModel: T) -> Unit,
     emptyItem: @Composable () -> Unit = { EmptyItem() },
     headerItem: (LazyListScope.() -> Unit)? = null,
 ) {
     LazyColumn(
+        state = lazyListState,
         modifier = Modifier
             .fillMaxSize()
-            .padding(bottom = 2.dp)
+            .padding(bottom = 2.dp),
+        userScrollEnabled = isScrollEnable
     ) {
         headerItem?.let { it() }
 

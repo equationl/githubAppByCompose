@@ -86,8 +86,6 @@ fun RepoDetailScreen(
     val createIssueDialogState: MaterialDialogState = rememberMaterialDialogState(false)
     val branchDialogState: MaterialDialogState = rememberMaterialDialogState(false)
 
-    var pagerUserScrollEnabled by remember { mutableStateOf(true) }
-
     LaunchedEffect(Unit) {
         viewModel.viewEvents.collect {
             when (it) {
@@ -112,8 +110,6 @@ fun RepoDetailScreen(
 
         withContext(Dispatchers.IO) {
             snapshotFlow { pagerState.currentPage }.collect { page ->
-                // 如果是 README 页面则禁止 pager 滑动，否则会有滑动冲突
-                pagerUserScrollEnabled = page != ReposPager.Readme.ordinal
                 viewModel.dispatch(ReposViewAction.ScrollTo(ReposPager.values()[page]))
             }
         }
@@ -181,7 +177,7 @@ fun RepoDetailScreen(
                 }
             )
 
-            MainContent(pagerState, navController, scaffoldState, repoName, repoOwner, viewState.branch, pagerUserScrollEnabled)
+            MainContent(pagerState, navController, scaffoldState, repoName, repoOwner, viewState.branch)
         }
 
         CreateIssueDialog(dialogState = createIssueDialogState, onPostDate = { tittle: String, content: String ->
@@ -214,17 +210,15 @@ private fun MainContent(
     repoName: String?,
     repoOwner: String?,
     branch: String?,
-    userScrollEnabled: Boolean
 ) {
     val coroutineScope = rememberCoroutineScope()
 
     HorizontalPager(
         pageCount = 4,
         state = pagerState,
-        userScrollEnabled = userScrollEnabled
     ) { page ->
         when (page) {
-            0 -> ReposReadmeContent(userName = repoOwner ?: "", reposName = repoName ?: "", branch = branch, scaffoldState)
+            0 -> ReposReadmeContent(userName = repoOwner ?: "", reposName = repoName ?: "", branch = branch, scaffoldState, navController)
             1 -> ReposActionContent(userName = repoOwner ?: "", reposName = repoName ?: "", branch = branch, scaffoldState, navController, onChangePager = {
                 coroutineScope.launch {
                     pagerState.animateScrollToPage(it.ordinal)

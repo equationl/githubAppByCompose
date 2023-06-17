@@ -75,6 +75,9 @@ object CommonUtils {
     fun getCommitHtmlUrl(userName: String, reposName: String, sha: String): String =
             AppConfig.GITHUB_BASE_URL + userName + "/" + reposName + "/commit/" + sha
 
+    fun getReleaseHtmlUrl(userName: String, reposName: String): String =
+        AppConfig.GITHUB_BASE_URL + userName + "/" + reposName + "/releases/"
+
     private val sImageEndTag = arrayListOf(".png", ".jpg", ".jpeg", ".gif", ".svg")
 
     fun isImageEnd(path: String): Boolean {

@@ -44,7 +44,6 @@ import com.equationl.githubapp.ui.common.ExpandableItem
 import com.equationl.githubapp.ui.common.MoreMenu
 import com.equationl.githubapp.ui.common.TopBar
 import com.equationl.githubapp.ui.common.comPlaceholder
-import com.equationl.githubapp.ui.view.repos.ReposViewAction
 import com.halilibo.richtext.markdown.Markdown
 import com.halilibo.richtext.ui.material3.Material3RichText
 import kotlinx.coroutines.launch
@@ -95,7 +94,7 @@ fun ReleaseScreen(
                         isShow = isShowDropMenu,
                         onDismissRequest = { isShowDropMenu = false },
                         onClick =  {
-                            viewModel.dispatch(ReposViewAction.ClickMoreMenu(context, it, repoOwner ?: "", repoName ?: ""))
+                            viewModel.dispatch(ReleaseAction.ClickMoreMenu(context, it, repoOwner ?: "", repoName ?: ""))
                         }
                     )
                 }

@@ -4,12 +4,11 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.equationl.githubapp.common.database.CacheDB
 import com.equationl.githubapp.common.database.DBRepositoryDetailReadme
-import com.equationl.githubapp.common.utlis.HtmlUtils
+import com.equationl.githubapp.common.utlis.formatReadme
 import com.equationl.githubapp.service.RepoService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -41,43 +40,44 @@ class RepoReadmeViewModel @Inject constructor(
             is RepoReadMeAction.GetReadmeContent -> getReadmeContent(
                 action.repoName,
                 action.ownerName,
-                action.branch,
-                action.backgroundColor,
-                action.primaryColor
+                action.branch
             )
         }
     }
 
-    private fun getReadmeContent(repoName: String, ownerName: String, branch: String?, backgroundColor: Color, primaryColor: Color) {
+    private fun getReadmeContent(repoName: String, ownerName: String, branch: String?) {
         viewModelScope.launch(exception) {
             val cacheData = dataBase.cacheDB().queryRepositoryDetailReadme("$ownerName/$repoName", branch)
             if (!cacheData.isNullOrEmpty()) {
                 val body = cacheData[0].data
                 if (body != null) {
                     Log.i("el", "refreshData: 使用缓存数据")
-                    viewStates = viewStates.copy(readmeContent = HtmlUtils.generateHtml(body, backgroundColor, primaryColor))
+                    viewStates = viewStates.copy(readmeContent = body)
                 }
             }
 
 
-            val response = repoService.getReadmeHtml(true, ownerName, repoName, branch = branch)
+            val response = repoService.getReadme(true, ownerName, repoName, branch = branch)
             if (response.isSuccessful) {
                 val body = response.body()
                 if (body == null) {
                     _viewEvents.trySend(RepoReadMeEvent.ShowMsg("body is null!"))
                 }
                 else {
+                    val fullPath = body.downloadUrl?.substring(0, body.downloadUrl.lastIndexOf('/')) ?: ""
+                    val mdContent = body.content.formatReadme(fullPath)
+
                     dataBase.cacheDB().insertRepositoryDetailReadme(
                         DBRepositoryDetailReadme(
                             "$ownerName/$repoName/$branch",
                             "$ownerName/$repoName",
-                            response.body(),
+                            mdContent,
                             branch
                         )
                     )
 
                     viewStates = viewStates.copy(
-                        readmeContent = HtmlUtils.generateHtml(body, backgroundColor, primaryColor)
+                        readmeContent = mdContent
                     )
                 }
             }
@@ -108,7 +108,7 @@ data class RepoReadmeState(
 )
 
 sealed class RepoReadMeAction {
-    data class GetReadmeContent(val repoName: String, val ownerName: String, val branch: String?, val backgroundColor: Color, val primaryColor: Color): RepoReadMeAction()
+    data class GetReadmeContent(val repoName: String, val ownerName: String, val branch: String?): RepoReadMeAction()
 }
 
 sealed class RepoReadMeEvent {
