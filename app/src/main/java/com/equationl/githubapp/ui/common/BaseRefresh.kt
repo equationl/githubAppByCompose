@@ -306,11 +306,13 @@ private fun <T: BaseUIModel>BasePagingLazyColumn(
 
             if (pagingItems.itemCount < 1) {
                 if (pagingItems.loadState.refresh == LoadState.Loading) {
-                    item {
+                    // 无数据，加载中
+                    // 因为已经有了全局加载动效，所以这里就不再额外显示加载状态了
+                    /*item {
                         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                             LoadItem()
                         }
-                    }
+                    }*/
                 }
                 else {
                     item {

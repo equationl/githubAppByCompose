@@ -74,7 +74,8 @@ class PersonViewModel @Inject constructor(
 
             val saveUserInfo: User? = DataStoreUtils.getSyncData(DataKey.UserInfo, "").fromJson()
 
-            personViewState = personViewState.copy(user = User())
+            // 不清除 user.type 避免重组整个 UI （person 使用 user.type 来判断应该显示哪个 UI 界面）
+            personViewState = personViewState.copy(user = User().apply { type = personViewState.user.type })
 
             val isLoginUser = saveUserInfo?.login == user // 是否是当前登录用户
 

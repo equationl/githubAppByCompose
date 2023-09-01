@@ -187,8 +187,6 @@ private fun OrgMember(
     val userListState = userListViewModel.viewStates
 
     LaunchedEffect(Unit) {
-        userListViewModel.dispatch(GeneralUserListAction.SetData(user.login ?: "", "", GeneralListEnum.OrgMembers))
-
         userListViewModel.viewEvents.collect {
             when (it) {
                 is BaseEvent.ShowMsg -> {
@@ -198,6 +196,10 @@ private fun OrgMember(
                 }
             }
         }
+    }
+
+    LaunchedEffect(user.login) {
+        userListViewModel.dispatch(GeneralUserListAction.SetData(user.login ?: "", "", GeneralListEnum.OrgMembers))
     }
 
     val userList = userListState.userListFlow?.collectAsLazyPagingItems()
