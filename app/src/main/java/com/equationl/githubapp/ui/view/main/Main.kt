@@ -110,7 +110,7 @@ fun MainScreen(
 ) {
     val context = LocalContext.current
     val viewState = mainViewModel.viewStates
-    val pagerState = rememberPagerState()
+    val pagerState = rememberPagerState(pageCount = { 3 })
     val scaffoldState = rememberBottomSheetScaffoldState()
     val coroutineScope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -273,7 +273,6 @@ private fun MainContent(
     val coroutineScope = rememberCoroutineScope()
 
     HorizontalPager(
-        pageCount = 3,
         state = pagerState,
         beyondBoundsPageCount = 2,
         userScrollEnabled = gesturesEnabled && pagerState.currentPage != 0,

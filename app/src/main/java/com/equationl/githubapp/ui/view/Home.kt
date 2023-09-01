@@ -1,11 +1,13 @@
 package com.equationl.githubapp.ui.view
 
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.equationl.githubapp.common.route.Route
 import com.equationl.githubapp.common.route.RouteParams
@@ -26,17 +28,14 @@ import com.equationl.githubapp.ui.view.repos.RepoDetailScreen
 import com.equationl.githubapp.ui.view.search.SearchScreen
 import com.equationl.githubapp.ui.view.userInfo.UserInfoScreen
 import com.equationl.githubapp.ui.view.welcome.WelcomeScreen
-import com.google.accompanist.navigation.animation.AnimatedNavHost
-import com.google.accompanist.navigation.animation.composable
-import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 
-@OptIn(ExperimentalAnimationApi::class)
+
 @Composable
 fun HomeNavHost(
     onFinish: () -> Unit
 ) {
-    val navController = rememberAnimatedNavController()
-    AnimatedNavHost(navController, Route.WELCOME) {
+    val navController = rememberNavController()
+    NavHost(navController, Route.WELCOME) {
 
         // 欢迎页
         composable(Route.WELCOME) {

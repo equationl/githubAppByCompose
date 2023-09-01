@@ -32,6 +32,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -84,6 +85,12 @@ fun IssueDetailScreen(
 
     var editIssue: IssueUIModel? by remember { mutableStateOf(null) }
 
+    var isShowHomeIcon by remember { mutableStateOf(false) }
+
+    val navBackStackEntry = navController.currentBackStack.collectAsState().value
+
+    isShowHomeIcon = navBackStackEntry.getOrNull(navBackStackEntry.lastIndex - 1)?.destination?.route?.contains(Route.REPO_DETAIL) == false
+
     LaunchedEffect(commentList) {
         viewModel.viewEvents.collect {
             when (it) {
@@ -119,7 +126,6 @@ fun IssueDetailScreen(
                         }
                     )
                     // 如果是从仓库详情页跳转过来的则不显示返回仓库主页按钮
-                    val isShowHomeIcon = navController.backQueue.getOrNull(navController.backQueue.lastIndex - 1)?.destination?.route?.contains(Route.REPO_DETAIL) == false
                     if (isShowHomeIcon) {
                         IconButton(onClick = {
                             navController.navigate("${Route.REPO_DETAIL}/${repoName}/${userName}")

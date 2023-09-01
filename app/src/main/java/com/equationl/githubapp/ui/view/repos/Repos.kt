@@ -83,7 +83,7 @@ fun RepoDetailScreen(
 ) {
     val context = LocalContext.current
     val viewState = viewModel.viewStates
-    val pagerState = rememberPagerState(initialPage = 1)
+    val pagerState = rememberPagerState(initialPage = 1, pageCount = { 4 })
     val scaffoldState = rememberBottomSheetScaffoldState()
     val coroutineScope = rememberCoroutineScope()
     val createIssueDialogState: MaterialDialogState = rememberMaterialDialogState(false)
@@ -217,7 +217,6 @@ private fun MainContent(
     val coroutineScope = rememberCoroutineScope()
 
     HorizontalPager(
-        pageCount = 4,
         state = pagerState,
     ) { page ->
         when (page) {
