@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
@@ -184,75 +185,79 @@ fun MainScreen(
         },
         gesturesEnabled = viewState.gesturesEnabled
     ) {
-        Scaffold(
-            topBar = {
-                Column(modifier = Modifier.statusBarsPadding()) {
-                    HomeTopBar(
-                        title = viewState.title,
-                        navigationIcon = Icons.Outlined.Menu,
-                        actions = {
-                            IconButton(onClick = { navController.navigate(Route.SEARCH) }) {
-                                Icon(Icons.Outlined.Search, "搜索")
+        Column(
+            modifier = Modifier.systemBarsPadding()
+        ) {
+            Scaffold(
+                topBar = {
+                    Column(modifier = Modifier.statusBarsPadding()) {
+                        HomeTopBar(
+                            title = viewState.title,
+                            navigationIcon = Icons.Outlined.Menu,
+                            actions = {
+                                IconButton(onClick = { navController.navigate(Route.SEARCH) }) {
+                                    Icon(Icons.Outlined.Search, "搜索")
+                                }
+                            },
+                            onBack = {
+                                coroutineScope.launch {
+                                    if (drawerState.isOpen) drawerState.close() else drawerState.open()
+                                }
                             }
-                        },
-                        onBack = {
+                        )
+                    }
+                },
+                bottomBar = {
+                    BottomBar(
+                        viewState,
+                        onScrollTo = {
                             coroutineScope.launch {
-                                if (drawerState.isOpen) drawerState.close() else drawerState.open()
+                                if (it == viewState.currentPage) { // 点击的是当前页面的按钮，回到顶部或刷新
+                                    when (it) {
+                                        MainPager.HOME_DYNAMIC -> {
+                                            dynamicViewModel.dispatch(DynamicViewAction.TopOrRefresh)
+                                        }
+                                        MainPager.HOME_RECOMMEND -> {
+                                            recommendViewModel.dispatch(RecommendAction.TopOrRefresh)
+                                        }
+                                        MainPager.HOME_MY -> {
+                                            personViewModel.dispatch(PersonAction.TopOrRefresh)
+                                        }
+                                    }
+                                }
+                                else { // 点击的不是当前页面的按钮，跳转到点击的页面
+                                    pagerState.animateScrollToPage(it.ordinal)
+                                }
                             }
                         }
                     )
-                }
-            },
-            bottomBar = {
-                BottomBar(
-                    viewState,
-                    onScrollTo = {
-                        coroutineScope.launch {
-                            if (it == viewState.currentPage) { // 点击的是当前页面的按钮，回到顶部或刷新
-                                when (it) {
-                                    MainPager.HOME_DYNAMIC -> {
-                                        dynamicViewModel.dispatch(DynamicViewAction.TopOrRefresh)
-                                    }
-                                    MainPager.HOME_RECOMMEND -> {
-                                        recommendViewModel.dispatch(RecommendAction.TopOrRefresh)
-                                    }
-                                    MainPager.HOME_MY -> {
-                                        personViewModel.dispatch(PersonAction.TopOrRefresh)
-                                    }
-                                }
-                            }
-                            else { // 点击的不是当前页面的按钮，跳转到点击的页面
-                                pagerState.animateScrollToPage(it.ordinal)
-                            }
-                        }
-                    }
-                )
-            },
-            snackbarHost = {
-                SnackbarHost(hostState = scaffoldState.snackbarHostState) { snackBarData ->
-                    Snackbar(snackbarData = snackBarData)
-                }}
-        ) {
-            Column(
-                Modifier
-                    .background(MaterialTheme.colorScheme.background)
-                    .fillMaxSize()
-                    .padding(it)
+                },
+                snackbarHost = {
+                    SnackbarHost(hostState = scaffoldState.snackbarHostState) { snackBarData ->
+                        Snackbar(snackbarData = snackBarData)
+                    }}
             ) {
-                MainContent(
-                    pagerState,
-                    drawerState,
-                    navController,
-                    scaffoldState,
-                    viewState.gesturesEnabled,
-                    dynamicViewModel,
-                    recommendViewModel
-                ) { enable ->
-                    mainViewModel.dispatch(MainViewAction.ChangeGesturesEnabled(enable))
+                Column(
+                    Modifier
+                        .background(MaterialTheme.colorScheme.background)
+                        .fillMaxSize()
+                        .padding(it)
+                ) {
+                    MainContent(
+                        pagerState,
+                        drawerState,
+                        navController,
+                        scaffoldState,
+                        viewState.gesturesEnabled,
+                        dynamicViewModel,
+                        recommendViewModel
+                    ) { enable ->
+                        mainViewModel.dispatch(MainViewAction.ChangeGesturesEnabled(enable))
+                    }
                 }
-            }
 
-            UpdateDialog(context = context, dialogState = updateDialogState, content = updateContent)
+                UpdateDialog(context = context, dialogState = updateDialogState, content = updateContent)
+            }
         }
     }
 }

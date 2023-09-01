@@ -23,6 +23,8 @@ private fun formatImgPath(
 ): String {
     var result = mdContent
 
+    // TODO 在解析 MD 图片路径之前，应该先将 HTML 的图片转为 MD 的图片形式 <img src="https://github.com/guyijie1211/JustLive-Android/blob/master/pic/1.jpg" width="250" alt="首页推荐">
+
     try {
         val exp = Regex("!\\[[^]]*]\\((.*?)\\s*(\".*[^\"]\")?\\s*\\)")
         val tags = exp.findAll(result)

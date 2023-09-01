@@ -39,9 +39,7 @@ fun HomeNavHost(
 
         // 欢迎页
         composable(Route.WELCOME) {
-            Column(Modifier.systemBarsPadding()) {
-                WelcomeScreen(navHostController = navController)
-            }
+            WelcomeScreen(navHostController = navController)
         }
 
         // 登录
@@ -60,9 +58,7 @@ fun HomeNavHost(
 
         // 主页
         composable(Route.MAIN) {
-            Column(Modifier.systemBarsPadding()) {
-                MainScreen(navController, onFinish)
-            }
+            MainScreen(navController, onFinish)
         }
 
         // 通知页
@@ -243,9 +239,7 @@ fun HomeNavHost(
             val argument = requireNotNull(it.arguments)
             val imageUrl = argument.getString(RouteParams.PAR_IMAGE_URL)
 
-            Column(Modifier.systemBarsPadding()) {
-                ImageScreen(image = imageUrl ?: "", navController = navController)
-            }
+            ImageScreen(image = imageUrl ?: "", navController = navController)
         }
 
         // 仓库列表页
