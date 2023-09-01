@@ -25,6 +25,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DynamicFeed
 import androidx.compose.material.icons.filled.Person
@@ -289,8 +291,8 @@ private fun MainContent(
                 }
             }
         },
-        orientation = Orientation.Horizontal,
-        enabled = pagerState.currentPage == 0)
+            orientation = Orientation.Horizontal,
+            enabled = pagerState.currentPage == 0)
     ) { page ->
         when (page) {
             0 -> DynamicContent(scaffoldState, navController, dynamicViewModel)
@@ -392,37 +394,34 @@ private fun UpdateDialog(
     MaterialDialog(
         dialogState = dialogState,
         autoDismiss = true,
+        buttons = {
+            positiveButton(
+                text = "更新",
+                onClick = {
+                    context.browse("https://github.com/equationl/githubAppByCompose/releases")
+                }
+            )
+            negativeButton(text = "取消")
+        }
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(4.dp)
         ) {
 
-            Text(text = content, modifier = Modifier.padding(vertical = 6.dp))
+            Text(text = "发现新版本", style = MaterialTheme.typography.titleLarge)
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceEvenly,
+            Divider(modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp))
+
+            Text(
+                text = content,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(IntrinsicSize.Min)
-            ) {
-                TextButton(onClick = { dialogState.hide() }) {
-                    Text(text = "取消")
-                }
-
-                Divider(modifier = Modifier
-                    .fillMaxHeight()
-                    .width(1.dp))
-
-                TextButton(onClick = {
-                    dialogState.hide()
-
-                    context.browse("https://github.com/equationl/githubAppByCompose/releases")
-                }) {
-                    Text(text = "更新")
-                }
-            }
+                    .padding(vertical = 6.dp)
+                    .verticalScroll(
+                        rememberScrollState()
+                    )
+            )
         }
     }
 }

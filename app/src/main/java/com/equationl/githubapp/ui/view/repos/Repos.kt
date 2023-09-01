@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Share
@@ -52,6 +54,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -120,24 +123,24 @@ fun RepoDetailScreen(
             var isShowDropMenu by remember { mutableStateOf(false) }
 
             TopBar(
-                 title = getTitle(repoName, viewState.branch),
-                 actions = {
-                     IconButton(onClick = { isShowDropMenu = !isShowDropMenu}) {
-                         Icon(Icons.Outlined.MoreHoriz, "More")
-                     }
+                title = getTitle(repoName, viewState.branch),
+                actions = {
+                    IconButton(onClick = { isShowDropMenu = !isShowDropMenu}) {
+                        Icon(Icons.Outlined.MoreHoriz, "More")
+                    }
 
-                     MoreMenu(
-                         isShow = isShowDropMenu,
-                         options = listOf("在浏览器中打开", "复制链接", "分享", "分支", "版本"),
-                         onDismissRequest = { isShowDropMenu = false },
-                         onClick =  {
-                             viewModel.dispatch(ReposViewAction.ClickMoreMenu(context, it, repoOwner ?: "", repoName ?: ""))
-                         }
-                     )
-                 }
-             ) {
-                 navController.popBackStack()
-             }
+                    MoreMenu(
+                        isShow = isShowDropMenu,
+                        options = listOf("在浏览器中打开", "复制链接", "分享", "分支", "版本"),
+                        onDismissRequest = { isShowDropMenu = false },
+                        onClick =  {
+                            viewModel.dispatch(ReposViewAction.ClickMoreMenu(context, it, repoOwner ?: "", repoName ?: ""))
+                        }
+                    )
+                }
+            ) {
+                navController.popBackStack()
+            }
         },
         bottomBar = {
             BottomBar(
@@ -324,25 +327,30 @@ private fun ChoiceBranchDialog(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(32.dp)
-                .padding(vertical = 16.dp)
+                .height(200.dp)
+                .verticalScroll(rememberScrollState())
         ) {
             dataList.forEachIndexed { index, item ->
-                TextButton(onClick = {
-                    if (item.isClickAble) {
-                        dialogState.hide()
-                        onClickItem(item)
-                    }
-                }) {
+                TextButton(
+                    onClick = {
+                        if (item.isClickAble) {
+                            dialogState.hide()
+                            onClickItem(item)
+                        }
+                    },
+                ) {
                     if (item.isBranch && !item.name.isNullOrEmpty()) {
-                        Text(text = item.name)
+                        Text(text = item.name, textAlign = TextAlign.Center)
                     }
                 }
 
                 if (index != dataList.lastIndex) {
-                    Divider(modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp))
+                    Divider(modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 32.dp))
                 }
             }
         }

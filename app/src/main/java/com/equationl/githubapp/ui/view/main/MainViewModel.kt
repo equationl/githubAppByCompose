@@ -67,8 +67,10 @@ class MainViewModel @Inject constructor(
                                 // 有更新
                                 _viewEvents.trySend(MainViewEvent.HadUpdate(item.body ?: "新版本"))
                             }
+                            else {
+                                if (showTip) _viewEvents.trySend(BaseEvent.ShowMsg("已经是最新版本"))
+                            }
                         }
-                        if (showTip) _viewEvents.trySend(BaseEvent.ShowMsg("已经是最新版本"))
                     } else {
                         if (showTip) _viewEvents.trySend(BaseEvent.ShowMsg("已经是最新版本"))
                     }
