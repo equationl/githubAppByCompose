@@ -7,10 +7,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewModelScope
+import com.equationl.githubapp.common.constant.Constant
 import com.equationl.githubapp.common.utlis.CommonUtils
 import com.equationl.githubapp.common.utlis.HtmlUtils
 import com.equationl.githubapp.common.utlis.browse
 import com.equationl.githubapp.common.utlis.copy
+import com.equationl.githubapp.common.utlis.formatReadme
 import com.equationl.githubapp.common.utlis.share
 import com.equationl.githubapp.service.RepoService
 import com.equationl.githubapp.ui.common.BaseAction
@@ -32,7 +34,7 @@ class CodeDetailViewModel @Inject constructor(
     override val exception: CoroutineExceptionHandler = CoroutineExceptionHandler { _, throwable ->
         viewModelScope.launch {
             Log.e("CodeDetailViewModel", "Request Error: ", throwable)
-            viewStates = viewStates.copy(htmlContent = "<h1>该文件不支持预览</h1>")
+            viewStates = viewStates.copy(contentString = "<h1>该文件不支持预览</h1>")
             _viewEvents.send(BaseEvent.ShowMsg("错误："+throwable.message))
         }
     }
@@ -41,7 +43,7 @@ class CodeDetailViewModel @Inject constructor(
         super.dispatch(action)
 
         when (action) {
-            is CodeDetailAction.LoadDate -> loadData(action.userName, action.reposName, action.path, action.localCode, action.backgroundColor, action.primaryColor)
+            is CodeDetailAction.LoadDate -> loadData(action.userName, action.reposName, action.path, action.localCode, action.branch, action.backgroundColor, action.primaryColor)
             is CodeDetailAction.ClickMoreMenu -> clickMoreMenu(action.context, action.pos, action.userName, action.reposName, action.url)
         }
     }
@@ -64,43 +66,69 @@ class CodeDetailViewModel @Inject constructor(
         }
     }
 
-    private fun loadData(userName: String, reposName: String, path: String, localCode: String?, backgroundColor: Color, primaryColor: Color) {
+    private fun loadData(userName: String, reposName: String, path: String, localCode: String?, branch: String?, backgroundColor: Color, primaryColor: Color) {
         viewModelScope.launch(exception) {
-            if (localCode == null || localCode == "null") {
-                requestFile(userName, reposName, path, backgroundColor, primaryColor)
+            if (localCode == null || localCode == Constant.RouteParNull || localCode == Constant.MdFilePreview) {
+                requestFile(userName, reposName, path, branch, backgroundColor, primaryColor, localCode)
             }
             else {
                 val codeContent = File(localCode).readText()
-                viewStates = viewStates.copy(htmlContent = codeContent)
+                viewStates = viewStates.copy(contentString = codeContent)
             }
         }
     }
 
-    private suspend fun requestFile(userName: String, reposName: String, path: String, backgroundColor: Color, primaryColor: Color) {
-        val response = repoService.getRepoFilesDetail(userName, reposName, path)
+    private suspend fun requestFile(userName: String, reposName: String, path: String, branch: String?, backgroundColor: Color, primaryColor: Color, localCode: String?) {
+
+        Log.i("el", "requestFile: path = $path")
+
+        val response = repoService.getRepoFilesDetail(userName, reposName, path, ref = branch)
+
+        var resultContent: String
+
         if (response.isSuccessful) {
             val body = response.body()
             if (body == null) {
-                viewStates = viewStates.copy(htmlContent = "<h1>该文件为空</h1>")
+                resultContent = "<h1>该文件为空</h1>"
+                // viewStates = viewStates.copy(htmlContent = "<h1>该文件为空</h1>")
                 _viewEvents.trySend(BaseEvent.ShowMsg("body is null!"))
             }
             else {
-                val htmlString = HtmlUtils.resolveHtmlFile(body, backgroundColor, primaryColor)
-                viewStates = viewStates.copy(htmlContent = htmlString)
+                resultContent = body // HtmlUtils.resolveHtmlFile(body, backgroundColor, primaryColor)
+                // viewStates = viewStates.copy(htmlContent = htmlString)
             }
         }
         else {
-            viewStates = viewStates.copy(htmlContent = "<h1>该文件不支持预览</h1>")
+            resultContent = "<h1>该文件不支持预览</h1>"
+            // viewStates = viewStates.copy(htmlContent = "<h1>该文件不支持预览</h1>")
             _viewEvents.send(BaseEvent.ShowMsg("获取失败：${response.errorBody()?.string()}"))
+        }
+
+        viewStates = if (localCode == Constant.MdFilePreview) {
+
+            var fullPath = "https://raw.githubusercontent.com/$userName/$reposName"
+            if (!branch.isNullOrBlank()) {
+                fullPath += "/$branch"
+            }
+            viewStates.copy(
+                contentString = resultContent.formatReadme(fullPath),
+                isHtmlContent = false
+            )
+        } else {
+            viewStates.copy(
+                contentString = HtmlUtils.resolveHtmlFile(resultContent, backgroundColor, primaryColor),
+                isHtmlContent = true
+            )
         }
     }
 }
 
 data class CodeDetailState (
-    val htmlContent: String? = null
+    var isHtmlContent: Boolean = true,
+    val contentString: String? = null
 )
 
 sealed class CodeDetailAction: BaseAction() {
-    data class LoadDate(val context: Context, val userName: String, val reposName: String, val path: String, val localCode: String?, val backgroundColor: Color, val primaryColor: Color) : CodeDetailAction()
+    data class LoadDate(val context: Context, val userName: String, val reposName: String, val path: String, val localCode: String?, val branch: String?, val backgroundColor: Color, val primaryColor: Color) : CodeDetailAction()
     data class ClickMoreMenu(val context: Context, val pos: Int, val userName: String, val reposName: String, val url: String): CodeDetailAction()
 }

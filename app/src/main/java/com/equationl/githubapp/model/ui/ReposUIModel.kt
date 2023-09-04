@@ -37,4 +37,6 @@ class ReposUIModel: BaseUIModel() {
     var repositoryTopics: List<String> = listOf()
 
     var repositoryLastUpdateTime: String = ""
+
+    var defaultBranch: String? = null
 }

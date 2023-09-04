@@ -23,6 +23,7 @@ object RouteParams {
     const val PAR_ISSUE_NUM = "issue_number"
     const val PAR_REPO_PATH = "repo_path"
     const val PAR_REPO_OWNER = "repo_owner"
+    const val PAR_REPO_BRANCH = "repo_branch"
     const val PAR_PUSH_SHA = "push_sha"
     const val PAR_LOCAL_CODE = "local_code"
     const val PAR_URL = "url"

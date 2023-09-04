@@ -10,6 +10,7 @@ import com.equationl.githubapp.model.bean.User
 import com.equationl.githubapp.service.RepoService
 import com.equationl.githubapp.util.Utils.toHexString
 import com.equationl.githubapp.util.fromJson
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -70,7 +71,7 @@ object CommonUtils {
             AppConfig.GITHUB_BASE_URL + userName
 
     fun getFileHtmlUrl(userName: String, reposName: String, path: String, branch: String = "master"): String =
-            AppConfig.GITHUB_BASE_URL + userName + "/" + reposName + "/blob/" + branch + if (path.startsWith("/")) path else "/$path"
+            AppConfig.GITHUB_BASE_URL + userName + "/" + reposName + "/blob/" + branch + if (path.startsWith("/") || path.isBlank()) path else "/$path"
 
     fun getCommitHtmlUrl(userName: String, reposName: String, sha: String): String =
             AppConfig.GITHUB_BASE_URL + userName + "/" + reposName + "/commit/" + sha
@@ -78,16 +79,13 @@ object CommonUtils {
     fun getReleaseHtmlUrl(userName: String, reposName: String): String =
         AppConfig.GITHUB_BASE_URL + userName + "/" + reposName + "/releases/"
 
-    private val sImageEndTag = arrayListOf(".png", ".jpg", ".jpeg", ".gif", ".svg")
+    fun getFileType(path: String): FileType {
+        val fileExtension = File(path).extension.lowercase()
 
-    fun isImageEnd(path: String): Boolean {
-        var image = false
-        sImageEndTag.forEach {
-            if (path.indexOf(it) + it.length == path.length) {
-                image = true
-            }
-        }
-        return image
+        if (fileExtension in FileType.Img.type) return FileType.Img
+        if (fileExtension in FileType.Md.type) return FileType.Md
+
+        return FileType.Other
     }
 
     /**
@@ -130,4 +128,12 @@ object CommonUtils {
         CookieManager.getInstance().flush()
     }
 
+
+    enum class FileType(
+        val type: List<String>
+    ) {
+        Img(listOf("png", "jpg", "jpeg", "gif", "svg")),
+        Md(listOf("md")),
+        Other(listOf())
+    }
 }

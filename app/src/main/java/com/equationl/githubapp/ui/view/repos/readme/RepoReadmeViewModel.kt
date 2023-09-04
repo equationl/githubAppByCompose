@@ -57,15 +57,20 @@ class RepoReadmeViewModel @Inject constructor(
             }
 
 
-            val response = repoService.getReadme(true, ownerName, repoName, branch = branch)
+            val response = repoService.getReadmeHtml(true, ownerName, repoName, branch = branch)
             if (response.isSuccessful) {
                 val body = response.body()
                 if (body == null) {
                     _viewEvents.trySend(RepoReadMeEvent.ShowMsg("body is null!"))
                 }
                 else {
-                    val fullPath = body.downloadUrl?.substring(0, body.downloadUrl.lastIndexOf('/')) ?: ""
-                    val mdContent = body.content.formatReadme(fullPath)
+                    // val fullPath = body.downloadUrl?.substring(0, body.downloadUrl.lastIndexOf('/')) ?: ""
+                    var fullPath = "https://raw.githubusercontent.com/$ownerName/$repoName"
+                    if (!branch.isNullOrBlank()) {
+                        fullPath += "/$branch"
+                    }
+
+                    val mdContent = body.formatReadme(fullPath)
 
                     dataBase.cacheDB().insertRepositoryDetailReadme(
                         DBRepositoryDetailReadme(

@@ -180,7 +180,9 @@ fun RepoDetailScreen(
                 }
             )
 
-            MainContent(pagerState, navController, scaffoldState, repoName, repoOwner, viewState.branch)
+            MainContent(pagerState, navController, scaffoldState, repoName, repoOwner, viewState.branch) { branch ->
+                viewModel.dispatch(ReposViewAction.OnChangeBranch(Branch(name = branch)))
+            }
         }
 
         CreateIssueDialog(dialogState = createIssueDialogState, onPostDate = { tittle: String, content: String ->
@@ -213,6 +215,7 @@ private fun MainContent(
     repoName: String?,
     repoOwner: String?,
     branch: String?,
+    onChangeBranch: (branch: String) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
 
@@ -221,11 +224,18 @@ private fun MainContent(
     ) { page ->
         when (page) {
             0 -> ReposReadmeContent(userName = repoOwner ?: "", reposName = repoName ?: "", branch = branch, scaffoldState, navController)
-            1 -> ReposActionContent(userName = repoOwner ?: "", reposName = repoName ?: "", branch = branch, scaffoldState, navController, onChangePager = {
-                coroutineScope.launch {
-                    pagerState.animateScrollToPage(it.ordinal)
-                }
-            })
+            1 -> ReposActionContent(
+                userName = repoOwner ?: "",
+                reposName = repoName ?: "",
+                branch = branch, scaffoldState,
+                navController,
+                onChangePager = {
+                    coroutineScope.launch {
+                        pagerState.animateScrollToPage(it.ordinal)
+                    }
+                                },
+                onGetDefaultBranch = onChangeBranch
+            )
             2 -> ReposFileContent(userName = repoOwner ?: "", repoName = repoName ?: "", branch = branch, scaffoldState, navController)
             3 -> ReposIssueContent(userName = repoOwner ?: "", reposName = repoName ?: "", scaffoldState, navController)
         }

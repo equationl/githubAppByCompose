@@ -70,7 +70,7 @@ fun ReposFileContent(
             isRefresh = viewState.isRefresh,
             fileList = viewState.fileList,
             onClickFileItem = {
-                viewModel.dispatch(RepoFileAction.OnClickFile(it, userName, repoName))
+                viewModel.dispatch(RepoFileAction.OnClickFile(it, userName, repoName, branch ?: "master"))
             },
             onRefresh = {
                 viewModel.dispatch(RepoFileAction.LoadData(repoName, userName, branch))

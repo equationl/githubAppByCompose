@@ -1,5 +1,6 @@
 package com.equationl.githubapp.ui.view.code
 
+import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,11 +26,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import com.equationl.githubapp.common.route.Route
 import com.equationl.githubapp.ui.common.BaseEvent
 import com.equationl.githubapp.ui.common.CustomWebView
 import com.equationl.githubapp.ui.common.LoadItem
 import com.equationl.githubapp.ui.common.MoreMenu
 import com.equationl.githubapp.ui.common.TopBar
+import com.equationl.githubapp.ui.view.repos.readme.MarkDownContent
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -41,6 +44,7 @@ fun CodeDetailScreen(
     path: String,
     localCode: String?,
     url: String?,
+    branch: String?,
     navController: NavHostController,
     viewModel: CodeDetailViewModel = hiltViewModel()
 ) {
@@ -64,7 +68,7 @@ fun CodeDetailScreen(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.dispatch(CodeDetailAction.LoadDate(context, userName, reposName, path, localCode, backgroundColor, primaryColor))
+        viewModel.dispatch(CodeDetailAction.LoadDate(context, userName, reposName, path, localCode, branch, backgroundColor, primaryColor))
     }
 
     Scaffold(
@@ -110,10 +114,20 @@ fun CodeDetailScreen(
         }
     ) {
         Column(modifier = Modifier.padding(it)) {
-            CodeDetailContent(
-                codeHtml = viewState.htmlContent,
-                navController = navController
-            )
+            if (viewState.isHtmlContent) {
+                CodeDetailContent(
+                    codeHtml = viewState.contentString,
+                    navController = navController
+                )
+            }
+            else {
+                MarkDownContent(
+                    content = viewState.contentString ?: "Empty",
+                    onClickImg = {
+                        navController.navigate("${Route.IMAGE_PREVIEW}/${Uri.encode(it)}")
+                    }
+                )
+            }
         }
     }
 }

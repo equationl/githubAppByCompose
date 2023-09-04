@@ -45,7 +45,20 @@ fun ReposReadmeContent(
         viewModel.dispatch(RepoReadMeAction.GetReadmeContent(reposName, userName, branch))
     }
 
+    MarkDownContent(
+        content = viewModel.viewStates.readmeContent,
+        onClickImg = {
+            navController.navigate("${Route.IMAGE_PREVIEW}/${Uri.encode(it)}")
+        }
+    )
 
+}
+
+@Composable
+fun MarkDownContent(
+    content: String,
+    onClickImg: (url: String) -> Unit
+) {
     Column(modifier = Modifier
         .fillMaxSize()
         .verticalScroll(rememberScrollState())
@@ -58,12 +71,9 @@ fun ReposReadmeContent(
             // 包括仓库、 issue、 release、仓库文件 等
             // 另外如果链接是相对路径时，点击会直接闪退
             Markdown(
-                content = viewModel.viewStates.readmeContent,
-                onImgClicked = {
-                    navController.navigate("${Route.IMAGE_PREVIEW}/${Uri.encode(it)}")
-                }
+                content = content,
+                onImgClicked = onClickImg
             )
         }
     }
-
 }

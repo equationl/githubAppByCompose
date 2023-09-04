@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
+import com.equationl.githubapp.common.constant.Constant
 import com.equationl.githubapp.common.route.Route
 import com.equationl.githubapp.common.utlis.CommonUtils
 import com.equationl.githubapp.common.utlis.toSplitString
@@ -39,7 +40,7 @@ class RepoFileViewModel @Inject constructor(
     fun dispatch(action: RepoFileAction) {
         when (action) {
             is RepoFileAction.LoadData -> loadData(action.repoName, action.userName, action.branch)
-            is RepoFileAction.OnClickFile -> onClickFile(action.fileUIModel, action.userName, action.repoName)
+            is RepoFileAction.OnClickFile -> onClickFile(action.fileUIModel, action.userName, action.repoName, action.branch)
             is RepoFileAction.OnClickPath -> onClickPath(action.pos)
         }
     }
@@ -71,23 +72,32 @@ class RepoFileViewModel @Inject constructor(
         }
     }
 
-    private fun onClickFile(fileUIModel: FileUIModel, userName: String, repoName: String) {
+    private fun onClickFile(fileUIModel: FileUIModel, userName: String, repoName: String, branch: String) {
         if (viewStates.isRefresh) return
 
         if (fileUIModel.type == "file") {
-            val isImage = CommonUtils.isImageEnd(fileUIModel.title)
-            if (isImage) {
-                val path = viewStates.pathList.toSplitString() + "/" + fileUIModel.title
-                val url = CommonUtils.getFileHtmlUrl(userName, repoName, path) + "?raw=true"
-                val routePath = "${Route.IMAGE_PREVIEW}/${Uri.encode(url)}"
-                _viewEvents.trySend(RepoFileEvent.GoTo(routePath))
-            }
-            else {
-                var dir = viewStates.pathList.toSplitString()
-                dir = if (dir == "/.") "" else "$dir/"
-                val path = Uri.encode(dir + fileUIModel.title)
-                val routePath = "${Route.CODE_DETAIL}/${repoName}/${userName}/$path/null/${path}"
-                _viewEvents.trySend(RepoFileEvent.GoTo(routePath))
+            when (CommonUtils.getFileType(fileUIModel.title)) {
+                CommonUtils.FileType.Img -> {
+                    val dir = viewStates.pathList.toSplitString()
+                    val path = if (dir == "/.") fileUIModel.title else dir + "/" + fileUIModel.title
+                    val url = CommonUtils.getFileHtmlUrl(userName, repoName, path, branch) + "?raw=true"
+                    val routePath = "${Route.IMAGE_PREVIEW}/${Uri.encode(url)}"
+                    _viewEvents.trySend(RepoFileEvent.GoTo(routePath))
+                }
+                CommonUtils.FileType.Md -> {
+                    var dir = viewStates.pathList.toSplitString()
+                    dir = if (dir == "/.") "" else "$dir/"
+                    val path = Uri.encode(dir + fileUIModel.title)
+                    val routePath = "${Route.CODE_DETAIL}/${repoName}/${userName}/$path/${Constant.MdFilePreview}/${path}/$branch"
+                    _viewEvents.trySend(RepoFileEvent.GoTo(routePath))
+                }
+                CommonUtils.FileType.Other -> {
+                    var dir = viewStates.pathList.toSplitString()
+                    dir = if (dir == "/.") "" else "$dir/"
+                    val path = Uri.encode(dir + fileUIModel.title)
+                    val routePath = "${Route.CODE_DETAIL}/${repoName}/${userName}/$path/${Constant.RouteParNull}/${path}/$branch"
+                    _viewEvents.trySend(RepoFileEvent.GoTo(routePath))
+                }
             }
         }
         else {
@@ -124,7 +134,7 @@ data class RepoFileState(
 
 sealed class RepoFileAction : BaseAction() {
     data class LoadData(val repoName: String, val userName: String, val branch: String?): RepoFileAction()
-    data class OnClickFile(val fileUIModel: FileUIModel, val userName: String, val repoName: String): RepoFileAction()
+    data class OnClickFile(val fileUIModel: FileUIModel, val userName: String, val repoName: String, val branch: String): RepoFileAction()
     data class OnClickPath(val pos: Int): RepoFileAction()
 }
 

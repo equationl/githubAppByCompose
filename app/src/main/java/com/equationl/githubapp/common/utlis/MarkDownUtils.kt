@@ -1,6 +1,7 @@
 package com.equationl.githubapp.common.utlis
 
-import okio.ByteString.Companion.decodeBase64
+import com.vladsch.flexmark.html2md.converter.FlexmarkHtmlConverter
+import com.vladsch.flexmark.util.data.MutableDataSet
 
 fun String?.formatReadme(
     fullPath: String
@@ -10,10 +11,23 @@ fun String?.formatReadme(
     }
 
     else {
-        var result = this.replace("\\n", "\n")
+        val options = MutableDataSet()
+            .set(
+                FlexmarkHtmlConverter.OUTPUT_ATTRIBUTES_ID, false // 关闭 ID 生成锚点
+            )
+            .set(
+                FlexmarkHtmlConverter.SETEXT_HEADINGS, false // 启用 h1、 h2
+            )
+        var result = FlexmarkHtmlConverter
+            .builder(options)
+            .build()
+            .convert(this)
+        result = formatImgPath(fullPath, result)
+        result
+/*        var result = this.replace("\\n", "\n")
         result = (result.decodeBase64()?.string(Charsets.UTF_8)) ?: "**格式化文件失败**"
         result = formatImgPath(fullPath = fullPath, mdContent = result)
-        result
+        result*/
     }
 }
 
@@ -31,7 +45,7 @@ private fun formatImgPath(
     fullPath: String,
     mdContent: String
 ): String {
-    var result = mdContent.imgTag2MdImg()
+    var result = mdContent// .imgTag2MdImg()
 
     try {
         val exp = Regex("!\\[[^]]*]\\((.*?)\\s*(\".*[^\"]\")?\\s*\\)")
@@ -56,27 +70,6 @@ private fun formatImgPath(
         e.printStackTrace()
         return result
     }
-}
-
-/**
- * 将 HTML 的图片标签 <img src="xxx"> 转为 MD 的图片标签 ![xxx](xxx)
- * */
-private fun String.imgTag2MdImg(): String {
-    var result = this
-
-    val fullTextRegex = Regex("<img[\\s\\S]*?>")
-    val fullTextTags = fullTextRegex.findAll(this)
-    for (fullTextTag in fullTextTags) {
-        val tag = fullTextTag.value
-
-        var src = Regex("<img.*?src=\"(.*?)\"").find(tag)?.groupValues?.getOrNull(1) ?: ""
-        if (src.isNotBlank()) {
-            src = "![img]($src) \n\n"
-        }
-        result = result.replace(tag, src)
-    }
-
-    return result
 }
 
 private fun getRealPath(rawPath: String, fullPath: String): String {

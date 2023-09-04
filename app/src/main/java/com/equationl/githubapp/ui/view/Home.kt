@@ -170,7 +170,7 @@ fun HomeNavHost(
         }
 
         // 代码预览页
-        composable("${Route.CODE_DETAIL}/{${RouteParams.PAR_REPO_PATH}}/{${RouteParams.PAR_REPO_OWNER}}/{${RouteParams.PAR_FILE_PATH}}/{${RouteParams.PAR_LOCAL_CODE}}/{${RouteParams.PAR_URL}}",
+        composable("${Route.CODE_DETAIL}/{${RouteParams.PAR_REPO_PATH}}/{${RouteParams.PAR_REPO_OWNER}}/{${RouteParams.PAR_FILE_PATH}}/{${RouteParams.PAR_LOCAL_CODE}}/{${RouteParams.PAR_URL}}/{${RouteParams.PAR_REPO_BRANCH}}",
             arguments = listOf(
                 navArgument(RouteParams.PAR_REPO_PATH) {
                     type = NavType.StringType
@@ -192,6 +192,10 @@ fun HomeNavHost(
                     type = NavType.StringType
                     nullable = true
                 },
+                navArgument(RouteParams.PAR_REPO_BRANCH) {
+                    type = NavType.StringType
+                    nullable = true
+                },
             )) {
             val argument = requireNotNull(it.arguments)
             val repoPath = argument.getString(RouteParams.PAR_REPO_PATH)
@@ -199,6 +203,7 @@ fun HomeNavHost(
             val filePath = argument.getString(RouteParams.PAR_FILE_PATH)
             val localCode = argument.getString(RouteParams.PAR_LOCAL_CODE)
             val url = argument.getString(RouteParams.PAR_URL)
+            val branch = argument.getString(RouteParams.PAR_REPO_BRANCH)
 
             Column(Modifier.systemBarsPadding()) {
                 CodeDetailScreen(
@@ -207,6 +212,7 @@ fun HomeNavHost(
                     path = filePath ?: "",
                     localCode = localCode,
                     url = if (url == "null") "" else url,
+                    branch = branch,
                     navController = navController
                 )
             }

@@ -48,8 +48,11 @@ fun ReposActionContent(
     scaffoldState: BottomSheetScaffoldState,
     navController: NavHostController,
     onChangePager: (pager: ReposPager) -> Unit,
+    onGetDefaultBranch: (branch: String) -> Unit,
     viewModel: RepoActionViewModel = hiltViewModel()
 ) {
+    val viewState = viewModel.viewStates
+
     LaunchedEffect(Unit) {
         viewModel.viewEvents.collect {
             when (it) {
@@ -66,7 +69,12 @@ fun ReposActionContent(
         viewModel.dispatch(RepoActionAction.GetRepoInfo(userName, reposName))
     }
 
-    val viewState = viewModel.viewStates
+    LaunchedEffect(viewState.reposUIModel.defaultBranch) {
+        if (!viewState.reposUIModel.defaultBranch.isNullOrBlank()) {
+            onGetDefaultBranch(viewState.reposUIModel.defaultBranch!!)
+        }
+    }
+
 
     when (viewState.currentTab) {
         RepoActionTab.Dynamic -> {
@@ -136,7 +144,12 @@ private fun ReposActionHeader(
             verticalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
                 .fillMaxWidth()
-                .paint(sizeToIntrinsics = false, painter = painter, contentScale = ContentScale.Crop, alpha = 0.2f)
+                .paint(
+                    sizeToIntrinsics = false,
+                    painter = painter,
+                    contentScale = ContentScale.Crop,
+                    alpha = 0.2f
+                )
                 .padding(6.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {

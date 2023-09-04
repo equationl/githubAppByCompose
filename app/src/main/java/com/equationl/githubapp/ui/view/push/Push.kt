@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import com.equationl.githubapp.common.constant.Constant
 import com.equationl.githubapp.common.route.Route
 import com.equationl.githubapp.model.ui.FileUIModel
 import com.equationl.githubapp.model.ui.PushUIModel
@@ -129,7 +130,7 @@ fun PushDetailScreen(
                     coroutineScope.launch(Dispatchers.IO) {
                         val tempFile = File(context.externalCacheDir, "${fileUIModel.title}-${System.currentTimeMillis()}.temp")
                         tempFile.writeText(fileUIModel.patch)
-                        val routePath = "${Route.CODE_DETAIL}/null/null/${fileUIModel.title}/${Uri.encode(tempFile.absolutePath)}/null"
+                        val routePath = "${Route.CODE_DETAIL}/${Constant.RouteParNull}/${Constant.RouteParNull}/${fileUIModel.title}/${Uri.encode(tempFile.absolutePath)}/${Constant.RouteParNull}/${Constant.RouteParNull}"
                         viewModel.dispatch(PushAction.GoTo(routePath))
                     }
                 },
