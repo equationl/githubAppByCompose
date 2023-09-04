@@ -17,13 +17,21 @@ fun String?.formatReadme(
     }
 }
 
+/**
+ * 格式化图片路径：
+ *
+ * 1. 将相对路径格式转为绝对路径。
+ *
+ * 2. 将 HTML 的 img 标签替换为 MD 的图片格式
+ *
+ * 3. 将 https://github.com/ 开头的图片路径替换为 https://raw.githubusercontent.com/ 并移除 blob 路径，
+ * 如 https://github.com/equationl/sampleRepo/blob/master/pic/1.jpg 替换为 https://raw.githubusercontent.com/equationl/sampleRepo/master/pic/1.jpg
+ * */
 private fun formatImgPath(
     fullPath: String,
     mdContent: String
 ): String {
-    var result = mdContent
-
-    // TODO 在解析 MD 图片路径之前，应该先将 HTML 的图片转为 MD 的图片形式 <img src="https://github.com/guyijie1211/JustLive-Android/blob/master/pic/1.jpg" width="250" alt="首页推荐">
+    var result = mdContent.imgTag2MdImg()
 
     try {
         val exp = Regex("!\\[[^]]*]\\((.*?)\\s*(\".*[^\"]\")?\\s*\\)")
@@ -38,6 +46,9 @@ private fun formatImgPath(
                 newPath = newPath.replace("./", "")
                 result = result.replace(capture, newPath)
             }
+            else if (capture != null && capture.startsWith("https://github.com/")) { // fixme 这里可能会有问题
+                result = result.replace(capture, capture.replace("https://github.com/", "https://raw.githubusercontent.com/").replace("/blob", ""))
+            }
         }
 
         return result
@@ -45,6 +56,27 @@ private fun formatImgPath(
         e.printStackTrace()
         return result
     }
+}
+
+/**
+ * 将 HTML 的图片标签 <img src="xxx"> 转为 MD 的图片标签 ![xxx](xxx)
+ * */
+private fun String.imgTag2MdImg(): String {
+    var result = this
+
+    val fullTextRegex = Regex("<img[\\s\\S]*?>")
+    val fullTextTags = fullTextRegex.findAll(this)
+    for (fullTextTag in fullTextTags) {
+        val tag = fullTextTag.value
+
+        var src = Regex("<img.*?src=\"(.*?)\"").find(tag)?.groupValues?.getOrNull(1) ?: ""
+        if (src.isNotBlank()) {
+            src = "![img]($src) \n\n"
+        }
+        result = result.replace(tag, src)
+    }
+
+    return result
 }
 
 private fun getRealPath(rawPath: String, fullPath: String): String {

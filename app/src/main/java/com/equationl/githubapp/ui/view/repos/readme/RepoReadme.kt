@@ -54,6 +54,9 @@ fun ReposReadmeContent(
             style = getRichTextStyle(),
             modifier = Modifier.fillMaxSize()
         ) {
+            //TODO 这里点击链接时应该判断一下，如果是 GitHub 链接就在本地使用 API 打开而不是直接使用浏览器打开
+            // 包括仓库、 issue、 release、仓库文件 等
+            // 另外如果链接是相对路径时，点击会直接闪退
             Markdown(
                 content = viewModel.viewStates.readmeContent,
                 onImgClicked = {
