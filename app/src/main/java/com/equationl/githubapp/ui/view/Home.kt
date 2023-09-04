@@ -174,11 +174,11 @@ fun HomeNavHost(
             arguments = listOf(
                 navArgument(RouteParams.PAR_REPO_PATH) {
                     type = NavType.StringType
-                    nullable = false
+                    nullable = true
                 },
                 navArgument(RouteParams.PAR_REPO_OWNER) {
                     type = NavType.StringType
-                    nullable = false
+                    nullable = true
                 },
                 navArgument(RouteParams.PAR_FILE_PATH) {
                     type = NavType.StringType
@@ -253,7 +253,7 @@ fun HomeNavHost(
             arguments = listOf(
                 navArgument(RouteParams.PAR_REPO_PATH) {
                     type = NavType.StringType
-                    nullable = false
+                    nullable = true
                 },
                 navArgument(RouteParams.PAR_REPO_OWNER) {
                     type = NavType.StringType
@@ -285,7 +285,7 @@ fun HomeNavHost(
             arguments = listOf(
                 navArgument(RouteParams.PAR_REPO_PATH) {
                     type = NavType.StringType
-                    nullable = false
+                    nullable = true
                 },
                 navArgument(RouteParams.PAR_REPO_OWNER) {
                     type = NavType.StringType
