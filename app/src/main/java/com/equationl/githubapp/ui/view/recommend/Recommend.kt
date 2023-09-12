@@ -49,6 +49,9 @@ fun RecommendContent(
                         lazyListState.animateScrollToItem(0)
                     }
                 }
+                is RecommendEvent.ScrollToTop -> {
+                    lazyListState.animateScrollToItem(0)
+                }
             }
         }
     }

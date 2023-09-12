@@ -105,6 +105,9 @@ class RecommendViewModel @Inject constructor(
                 _viewEvents.trySend(BaseEvent.ShowMsg("获取失败：${response.errorBody()?.string()}"))
                 viewStates = viewStates.copy(isRefreshing = false)
             }
+        }.invokeOnCompletion {
+            // 滚动到最顶部
+            _viewEvents.trySend(RecommendEvent.ScrollToTop)
         }
     }
 
@@ -130,6 +133,7 @@ sealed class RecommendAction: BaseAction() {
 
 sealed class RecommendEvent: BaseEvent() {
     object TopOrRefresh: RecommendEvent()
+    object ScrollToTop: RecommendEvent()
 }
 
 enum class RecommendSinceFilter(val showName: String, val requestValue: String) {
