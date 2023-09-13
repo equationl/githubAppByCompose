@@ -1,5 +1,6 @@
 package com.equationl.githubapp.ui.view.repos.readme
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -8,6 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.equationl.githubapp.common.database.CacheDB
 import com.equationl.githubapp.common.database.DBRepositoryDetailReadme
+import com.equationl.githubapp.common.utlis.browse
 import com.equationl.githubapp.common.utlis.formatReadme
 import com.equationl.githubapp.service.RepoService
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -42,6 +44,35 @@ class RepoReadmeViewModel @Inject constructor(
                 action.ownerName,
                 action.branch
             )
+
+            is RepoReadMeAction.OnClickLink -> onClickLink(action.context, action.link)
+        }
+    }
+
+    private fun onClickLink(context: Context, link: String) {
+        //TODO 这里点击链接时应该判断一下，如果是 GitHub 链接就在本地使用 API 打开而不是直接使用浏览器打开
+        // 包括仓库、 issue、 release、仓库文件 等
+
+        println("click link $link")
+        if (!context.browse(link)) {
+            viewModelScope.launch {
+                _viewEvents.send(RepoReadMeEvent.ShowMsg("打开失败： $link"))
+            }
+        }
+        return
+
+        if (link.startsWith("https://github.com/")) { // 使用 github 开头的绝对路径
+
+        }
+        else if (!link.startsWith("http")) {  // 相对路径或其他协议
+
+        }
+        else { // 其他 http(s) 链接
+            if (!context.browse(link)) {
+                viewModelScope.launch {
+                    _viewEvents.send(RepoReadMeEvent.ShowMsg("打开失败： $link"))
+                }
+            }
         }
     }
 
@@ -114,6 +145,7 @@ data class RepoReadmeState(
 
 sealed class RepoReadMeAction {
     data class GetReadmeContent(val repoName: String, val ownerName: String, val branch: String?): RepoReadMeAction()
+    data class OnClickLink(val context: Context, val link: String): RepoReadMeAction()
 }
 
 sealed class RepoReadMeEvent {
