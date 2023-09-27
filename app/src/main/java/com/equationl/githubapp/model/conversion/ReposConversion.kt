@@ -64,6 +64,7 @@ object ReposConversion {
         reposUIModel.repositoryTopics = repository?.topics ?: listOf()
         reposUIModel.repositoryLastUpdateTime = CommonUtils.getDateStr(repository?.pushedAt)
         reposUIModel.defaultBranch = repository?.defaultBranch
+        reposUIModel.permission = repository?.permission
         return reposUIModel
     }
 

@@ -73,6 +73,7 @@ fun IssueDetailScreen(
     userName: String,
     repoName: String,
     issueNumber: Int,
+    hasAdminPermission: Boolean,
     navController: NavHostController,
     viewModel: IssueViewModel = hiltViewModel()
 ) {
@@ -145,6 +146,8 @@ fun IssueDetailScreen(
         bottomBar = {
             BottomBar(
                 issueUIModel = viewState.cacheIssueInfo ?: viewState.issueInfo,
+                hasAdminPermission = hasAdminPermission,
+                loginUser = viewState.loginUser,
                 onChangeIssueStatus = { viewModel.dispatch(IssueAction.OnChangeIssueStatus(it)) },
                 onChangeIssueLockStatus = { viewModel.dispatch(IssueAction.OnChangeIssueLockStatus(it)) },
                 onClickAddComment = {
@@ -532,6 +535,8 @@ private fun Header(
 @Composable
 private fun BottomBar(
     issueUIModel: IssueUIModel,
+    hasAdminPermission: Boolean,
+    loginUser: String?,
     onChangeIssueStatus: (status: String) -> Unit,
     onChangeIssueLockStatus: (isLocked: Boolean) -> Unit,
     onClickEditIssue: (issueUiModel: IssueUIModel) -> Unit,
@@ -540,30 +545,35 @@ private fun BottomBar(
     Divider(modifier = Modifier.fillMaxWidth())
 
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-        TextButton(onClick = {
-            onChangeIssueLockStatus(!issueUIModel.locked)
-        }) {
-            if (issueUIModel.locked) {
-                Text(text = "解锁")
-            }
-            else {
-                Text(text = "锁定")
-            }
-        }
-
-        TextButton(onClick = {
-            onChangeIssueStatus(if (issueUIModel.status == "open") "closed" else "open")
-        }) {
-            if (issueUIModel.status == "open") {
-                Text(text = "关闭")
-            }
-            else {
-                Text(text = "打开")
+        if (hasAdminPermission) {
+            TextButton(onClick = {
+                onChangeIssueLockStatus(!issueUIModel.locked)
+            }) {
+                if (issueUIModel.locked) {
+                    Text(text = "解锁")
+                }
+                else {
+                    Text(text = "锁定")
+                }
             }
         }
 
-        TextButton(onClick = { onClickEditIssue(issueUIModel) }) {
-            Text(text = "编辑")
+        // 如果是登录用户创建的 issue 也能编辑和关闭
+        if (hasAdminPermission || (loginUser != null && loginUser == issueUIModel.username)) {
+            TextButton(onClick = {
+                onChangeIssueStatus(if (issueUIModel.status == "open") "closed" else "open")
+            }) {
+                if (issueUIModel.status == "open") {
+                    Text(text = "关闭")
+                }
+                else {
+                    Text(text = "打开")
+                }
+            }
+
+            TextButton(onClick = { onClickEditIssue(issueUIModel) }) {
+                Text(text = "编辑")
+            }
         }
 
         TextButton(onClick = onClickAddComment) {

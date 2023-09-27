@@ -113,7 +113,7 @@ fun HomeNavHost(
         }
 
         // ISSUE 详情页
-        composable("${Route.ISSUE_DETAIL}/{${RouteParams.PAR_REPO_PATH}}/{${RouteParams.PAR_REPO_OWNER}}/{${RouteParams.PAR_ISSUE_NUM}}",
+        composable("${Route.ISSUE_DETAIL}/{${RouteParams.PAR_REPO_PATH}}/{${RouteParams.PAR_REPO_OWNER}}/{${RouteParams.PAR_ISSUE_NUM}}/{${RouteParams.PAR_ISSUE_ADMIN_PERMISSION}}",
             arguments = listOf(
                 navArgument(RouteParams.PAR_REPO_PATH) {
                     type = NavType.StringType
@@ -126,18 +126,24 @@ fun HomeNavHost(
                 navArgument(RouteParams.PAR_ISSUE_NUM) {
                     type = NavType.IntType
                     nullable = false
+                },
+                navArgument(RouteParams.PAR_ISSUE_ADMIN_PERMISSION) {
+                    type = NavType.BoolType
+                    nullable = false
                 }
             )) {
             val argument = requireNotNull(it.arguments)
             val repoPath = argument.getString(RouteParams.PAR_REPO_PATH)
             val repoOwner = argument.getString(RouteParams.PAR_REPO_OWNER)
             val issueNumber = argument.getInt(RouteParams.PAR_ISSUE_NUM)
+            val hasAdminPermission = argument.getBoolean(RouteParams.PAR_ISSUE_ADMIN_PERMISSION)
 
             Column(Modifier.systemBarsPadding()) {
                 IssueDetailScreen(
                     userName = repoOwner ?: "",
                     repoName = repoPath ?: "",
                     issueNumber = issueNumber,
+                    hasAdminPermission = hasAdminPermission,
                     navController = navController
                 )
             }

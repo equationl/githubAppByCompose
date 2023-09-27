@@ -19,6 +19,7 @@ import com.equationl.githubapp.common.utlis.copy
 import com.equationl.githubapp.common.utlis.share
 import com.equationl.githubapp.model.bean.CommentRequestModel
 import com.equationl.githubapp.model.bean.Issue
+import com.equationl.githubapp.model.bean.User
 import com.equationl.githubapp.model.conversion.IssueConversion
 import com.equationl.githubapp.model.paging.IssueCommentsPagingSource
 import com.equationl.githubapp.model.ui.IssueUIModel
@@ -26,6 +27,8 @@ import com.equationl.githubapp.service.IssueService
 import com.equationl.githubapp.ui.common.BaseAction
 import com.equationl.githubapp.ui.common.BaseEvent
 import com.equationl.githubapp.ui.common.BaseViewModel
+import com.equationl.githubapp.util.datastore.DataKey
+import com.equationl.githubapp.util.datastore.DataStoreUtils
 import com.equationl.githubapp.util.fromJson
 import com.equationl.githubapp.util.toJson
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -52,6 +55,11 @@ class IssueViewModel @Inject constructor(
             }
             is IssueAction.LoadData -> {
                 if (isInit) return
+
+                viewModelScope.launch(exception) {
+                    val userInfo: User? = DataStoreUtils.getSyncData(DataKey.UserInfo, "").fromJson()
+                    viewStates = viewStates.copy(loginUser = userInfo?.login)
+                }
 
                 viewModelScope.launch(exception) {
                     loadIssueInfo(action.userName, action.repoName, action.issueNumber)
@@ -263,7 +271,8 @@ data class IssueState(
     val issueCommentFlow: Flow<PagingData<IssueUIModel>>?,
     val issueInfo: IssueUIModel = IssueUIModel(),
     val cacheIssueInfo: IssueUIModel? = null,
-    val cacheCommentList: List<IssueUIModel>? = null
+    val cacheCommentList: List<IssueUIModel>? = null,
+    val loginUser: String? = null
 )
 
 sealed class IssueAction: BaseAction() {

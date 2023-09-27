@@ -26,6 +26,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.equationl.githubapp.model.bean.RepoPermission
 import com.equationl.githubapp.model.ui.IssueUIModel
 import com.equationl.githubapp.ui.common.AvatarContent
 import com.equationl.githubapp.ui.common.BaseEvent
@@ -39,6 +40,7 @@ import kotlinx.coroutines.launch
 fun ReposIssueContent(
     userName: String,
     reposName: String,
+    repoPermission: RepoPermission?,
     scaffoldState: BottomSheetScaffoldState,
     navController: NavHostController,
     viewModel: RepoIssueViewModel = hiltViewModel()
@@ -63,7 +65,7 @@ fun ReposIssueContent(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.dispatch(RepoIssueAction.SetDate(userName, reposName))
+        viewModel.dispatch(RepoIssueAction.SetDate(userName, reposName, repoPermission))
     }
 
     Column {
@@ -87,7 +89,7 @@ fun ReposIssueContent(
                 viewModel.dispatch(RepoIssueAction.ShowMsg(it))
             },
             onClickItem = {
-                viewModel.dispatch(RepoIssueAction.GoIssueDetail(userName, reposName, issueNumber = it.issueNum))
+                viewModel.dispatch(RepoIssueAction.GoIssueDetail(userName, reposName, issueNumber = it.issueNum, repoPermission?.admin ?: true))
             }
         )
     }

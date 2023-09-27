@@ -21,6 +21,7 @@ object Route {
 
 object RouteParams {
     const val PAR_ISSUE_NUM = "issue_number"
+    const val PAR_ISSUE_ADMIN_PERMISSION = "issue_admin_permission"
     const val PAR_REPO_PATH = "repo_path"
     const val PAR_REPO_OWNER = "repo_owner"
     const val PAR_REPO_BRANCH = "repo_branch"

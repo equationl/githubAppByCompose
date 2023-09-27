@@ -1,6 +1,7 @@
 package com.equationl.githubapp.model.ui
 
 import com.equationl.githubapp.model.BaseUIModel
+import com.equationl.githubapp.model.bean.RepoPermission
 
 
 /**
@@ -39,4 +40,6 @@ class ReposUIModel: BaseUIModel() {
     var repositoryLastUpdateTime: String = ""
 
     var defaultBranch: String? = null
+
+    var permission: RepoPermission? = null
 }

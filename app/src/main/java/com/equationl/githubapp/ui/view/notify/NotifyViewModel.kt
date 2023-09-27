@@ -78,7 +78,8 @@ class NotifyViewModel @Inject constructor(
                 _viewEvents.trySend(NotifyEvent.Goto("${Route.REPO_DETAIL}/${eventUIModel.repositoryName}/${eventUIModel.owner}"))
             }
             EventUIAction.Issue -> {
-                _viewEvents.trySend(NotifyEvent.Goto("${Route.ISSUE_DETAIL}/${eventUIModel.repositoryName}/${eventUIModel.owner}/${eventUIModel.IssueNum}"))
+                // fixme 无法拿到权限信息，所以默认返回有权限
+                _viewEvents.trySend(NotifyEvent.Goto("${Route.ISSUE_DETAIL}/${eventUIModel.repositoryName}/${eventUIModel.owner}/${eventUIModel.IssueNum}/true"))
             }
             EventUIAction.Push -> {
                 if (eventUIModel.pushSha.size == 1) {

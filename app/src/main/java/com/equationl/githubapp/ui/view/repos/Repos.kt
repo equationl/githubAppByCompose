@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.equationl.githubapp.model.bean.Branch
+import com.equationl.githubapp.model.bean.RepoPermission
 import com.equationl.githubapp.ui.common.BaseEvent
 import com.equationl.githubapp.ui.common.MoreMenu
 import com.equationl.githubapp.ui.common.TopBar
@@ -180,9 +181,21 @@ fun RepoDetailScreen(
                 }
             )
 
-            MainContent(pagerState, navController, scaffoldState, repoName, repoOwner, viewState.branch) { branch ->
-                viewModel.dispatch(ReposViewAction.OnChangeBranch(Branch(name = branch)))
-            }
+            MainContent(
+                pagerState,
+                navController,
+                scaffoldState,
+                repoName,
+                repoOwner,
+                viewState.branch,
+                viewState.repoPermission,
+                ongGetRepoPermission = { permission ->
+                    viewModel.dispatch(ReposViewAction.OnChangeRepoPermission(permission))
+                },
+                onChangeBranch = { branch ->
+                    viewModel.dispatch(ReposViewAction.OnChangeBranch(Branch(name = branch)))
+                }
+            )
         }
 
         CreateIssueDialog(dialogState = createIssueDialogState, onPostDate = { tittle: String, content: String ->
@@ -215,6 +228,8 @@ private fun MainContent(
     repoName: String?,
     repoOwner: String?,
     branch: String?,
+    permission: RepoPermission?,
+    ongGetRepoPermission: (repoInfo: RepoPermission) -> Unit,
     onChangeBranch: (branch: String) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -234,10 +249,11 @@ private fun MainContent(
                         pagerState.animateScrollToPage(it.ordinal)
                     }
                                 },
-                onGetDefaultBranch = onChangeBranch
+                onGetDefaultBranch = onChangeBranch,
+                onGetRepoPermission = ongGetRepoPermission
             )
             2 -> ReposFileContent(userName = repoOwner ?: "", repoName = repoName ?: "", branch = branch, scaffoldState, navController)
-            3 -> ReposIssueContent(userName = repoOwner ?: "", reposName = repoName ?: "", scaffoldState, navController)
+            3 -> ReposIssueContent(userName = repoOwner ?: "", reposName = repoName ?: "", repoPermission = permission, scaffoldState, navController)
         }
     }
 }

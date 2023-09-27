@@ -21,6 +21,9 @@ data class Repository (
     @SerializedName("default_branch")
     var defaultBranch: String? = null,
 
+    @SerializedName("permissions")
+    var permission: RepoPermission? = null,
+
     @SerializedName("created_at")
     var createdAt: Date? = null,
     @SerializedName("updated_at")
@@ -63,4 +66,17 @@ data class Repository (
     @SerializedName("has_pages")
     var hasPages: Boolean = false,
     var topics: List<String>? = null,
+)
+
+data class RepoPermission(
+    @SerializedName("admin")
+    val admin: Boolean?,
+    @SerializedName("maintain")
+    val maintain: Boolean?,
+    @SerializedName("pull")
+    val pull: Boolean?,
+    @SerializedName("push")
+    val push: Boolean?,
+    @SerializedName("triage")
+    val triage: Boolean?
 )

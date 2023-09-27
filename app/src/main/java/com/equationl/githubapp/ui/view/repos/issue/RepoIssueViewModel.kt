@@ -13,6 +13,7 @@ import com.equationl.githubapp.common.config.AppConfig
 import com.equationl.githubapp.common.database.CacheDB
 import com.equationl.githubapp.common.route.Route
 import com.equationl.githubapp.model.bean.Issue
+import com.equationl.githubapp.model.bean.RepoPermission
 import com.equationl.githubapp.model.conversion.IssueConversion
 import com.equationl.githubapp.model.paging.RepoIssuePagingSource
 import com.equationl.githubapp.model.ui.IssueUIModel
@@ -41,7 +42,7 @@ class RepoIssueViewModel @Inject constructor(
 
     fun dispatch(action: RepoIssueAction) {
         when (action) {
-            is RepoIssueAction.SetDate -> setData(userName = action.userName, repoName = action.repoName)
+            is RepoIssueAction.SetDate -> setData(userName = action.userName, repoName = action.repoName, repoPermission = action.repoPermission)
             is RepoIssueAction.ChangeState -> changeState(action.newState)
             is RepoIssueAction.Search -> search(action.q)
 
@@ -51,17 +52,19 @@ class RepoIssueViewModel @Inject constructor(
 
             is RepoIssueAction.GoIssueDetail -> {
                 _viewEvents.trySend(RepoIssueEvent.GoTo(
-                    "${Route.ISSUE_DETAIL}/${action.repoName}/${action.userName}/${action.issueNumber}"
+                    "${Route.ISSUE_DETAIL}/${action.repoName}/${action.userName}/${action.issueNumber}/${action.hasPermission}"
                 ))
             }
         }
     }
 
 
-    private fun setData(userName: String, repoName: String) {
+    private fun setData(userName: String, repoName: String, repoPermission: RepoPermission?) {
         if (isInit) return
 
         viewModelScope.launch {
+            viewStates = viewStates.copy(repoPermission = repoPermission)
+
             queryParameter = queryParameter.copy(userName = userName, repoName = repoName)
 
             val cacheData = dataBase.cacheDB().queryRepositoryIssue("$userName/$repoName", queryParameter.state.originalName)
@@ -136,15 +139,16 @@ class RepoIssueViewModel @Inject constructor(
 data class RepoIssueState(
     val issueFlow: Flow<PagingData<IssueUIModel>>? = null,
     val cacheIssueList: List<IssueUIModel>? = null,
-    val currentState: IssueState = IssueState.All
+    val currentState: IssueState = IssueState.All,
+    val repoPermission: RepoPermission? = null
 )
 
 sealed class RepoIssueAction: BaseAction() {
     data class ChangeState(val newState: IssueState): RepoIssueAction()
     data class Search(val q: String): RepoIssueAction()
-    data class SetDate(val userName: String, val repoName: String): RepoIssueAction()
+    data class SetDate(val userName: String, val repoName: String, val repoPermission: RepoPermission?): RepoIssueAction()
     data class ShowMsg(val msg: String): RepoIssueAction()
-    data class GoIssueDetail(val userName: String, val repoName: String, val issueNumber: Int): RepoIssueAction()
+    data class GoIssueDetail(val userName: String, val repoName: String, val issueNumber: Int, val hasPermission: Boolean): RepoIssueAction()
 }
 
 sealed class RepoIssueEvent: BaseEvent() {

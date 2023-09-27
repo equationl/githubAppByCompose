@@ -29,6 +29,7 @@ import com.equationl.githubapp.R
 import com.equationl.githubapp.common.route.Route
 import com.equationl.githubapp.common.route.RouteParams
 import com.equationl.githubapp.common.utlis.getImageLoader
+import com.equationl.githubapp.model.bean.RepoPermission
 import com.equationl.githubapp.model.ui.ReposUIModel
 import com.equationl.githubapp.ui.common.BaseEvent
 import com.equationl.githubapp.ui.common.LinkText
@@ -49,6 +50,7 @@ fun ReposActionContent(
     navController: NavHostController,
     onChangePager: (pager: ReposPager) -> Unit,
     onGetDefaultBranch: (branch: String) -> Unit,
+    onGetRepoPermission: (repoPermission: RepoPermission) -> Unit,
     viewModel: RepoActionViewModel = hiltViewModel()
 ) {
     val viewState = viewModel.viewStates
@@ -75,9 +77,16 @@ fun ReposActionContent(
         }
     }
 
+    LaunchedEffect(viewState.reposUIModel.permission) {
+        if (viewState.reposUIModel.defaultBranch != null) {
+            onGetRepoPermission(viewState.reposUIModel.permission!!)
+        }
+    }
+
 
     when (viewState.currentTab) {
         RepoActionTab.Dynamic -> {
+            // TODO 动态支持点击跳转
             RepoActionDynamicContent(
                 userName = userName,
                 reposName = reposName,

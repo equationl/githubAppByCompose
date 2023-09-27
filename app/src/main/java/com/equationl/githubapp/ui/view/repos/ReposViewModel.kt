@@ -12,6 +12,7 @@ import com.equationl.githubapp.common.utlis.copy
 import com.equationl.githubapp.common.utlis.share
 import com.equationl.githubapp.model.bean.Branch
 import com.equationl.githubapp.model.bean.Issue
+import com.equationl.githubapp.model.bean.RepoPermission
 import com.equationl.githubapp.service.IssueService
 import com.equationl.githubapp.service.RepoService
 import com.equationl.githubapp.ui.common.BaseAction
@@ -40,7 +41,12 @@ class ReposViewModel @Inject constructor(
             is ReposViewAction.OnChangeWatch -> onChangeWatch(action.isWatch, action.userName,action.repoName)
             is ReposViewAction.CreateIssue -> createIssue(action.userName, action.repoName, action.title, action.content)
             is ReposViewAction.OnChangeBranch -> onChangeBranch(action.branch)
+            is ReposViewAction.OnChangeRepoPermission -> onChangeRepoPermission(action.permission)
         }
+    }
+
+    private fun onChangeRepoPermission(permission: RepoPermission) {
+        viewStates = viewStates.copy(repoPermission = permission)
     }
 
     private fun clickMoreMenu(context: Context, pos: Int, userName: String, repoName: String) {
@@ -156,7 +162,7 @@ class ReposViewModel @Inject constructor(
                 if (body != null) {
                     _viewEvents.trySend(
                         ReposViewEvent.Goto(
-                        "${Route.ISSUE_DETAIL}/${repoName}/${userName}/${body.number}"
+                        "${Route.ISSUE_DETAIL}/${repoName}/${userName}/${body.number}/${viewStates.repoPermission?.admin ?: true}"
                     ))
                 }
             }
@@ -176,7 +182,8 @@ data class ReposViewState(
     val isWatch: Boolean = false,
     val isStar: Boolean = false,
     val branch: String? = null,
-    val branchList: List<Branch> = listOf()
+    val branchList: List<Branch> = listOf(),
+    val repoPermission: RepoPermission? = null,
 )
 
 sealed class ReposViewEvent: BaseEvent() {
@@ -193,6 +200,7 @@ sealed class ReposViewAction: BaseAction() {
     data class ClickMoreMenu(val context: Context, val pos: Int, val userName: String, val repoName: String): ReposViewAction()
     data class CreateIssue(val userName: String, val repoName: String, val title: String, val content: String): ReposViewAction()
     data class OnChangeBranch(val branch: Branch): ReposViewAction()
+    data class OnChangeRepoPermission(val permission: RepoPermission): ReposViewAction()
 }
 
 enum class ReposPager {
