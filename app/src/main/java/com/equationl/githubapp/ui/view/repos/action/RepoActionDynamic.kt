@@ -8,7 +8,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.equationl.githubapp.model.bean.RepoPermission
 import com.equationl.githubapp.ui.common.BaseEvent
+import com.equationl.githubapp.ui.common.EventChoosePushDialog
 import com.equationl.githubapp.ui.view.dynamic.EventRefreshContent
 import kotlinx.coroutines.launch
 
@@ -17,6 +19,7 @@ import kotlinx.coroutines.launch
 fun RepoActionDynamicContent(
     userName: String,
     reposName: String,
+    repoPermission: RepoPermission?,
     headerItem: LazyListScope.() -> Unit,
     scaffoldState: BottomSheetScaffoldState,
     navHostController: NavHostController,
@@ -32,6 +35,9 @@ fun RepoActionDynamicContent(
                         scaffoldState.snackbarHostState.showSnackbar(message = it.msg)
                     }
                 }
+                is RepoActionDynamicEvent.Goto -> {
+                    navHostController.navigate(it.route)
+                }
             }
         }
     }
@@ -40,10 +46,25 @@ fun RepoActionDynamicContent(
         viewModel.dispatch(RepoActionDynamicAction.SetData(userName, reposName))
     }
 
+    LaunchedEffect(repoPermission) {
+        viewModel.dispatch(RepoActionDynamicAction.SetRepoPermission(repoPermission))
+    }
+
     val dynamicList = viewState.dynamicFlow?.collectAsLazyPagingItems()
 
     if (dynamicList?.itemCount == 0 && viewModel.isInit && viewState.cacheDynamic.isNullOrEmpty()) {
         return
+    }
+
+    if (viewState.showChoosePushDialog) {
+        EventChoosePushDialog(
+            desList = viewState.pushShaDesList,
+            valueList = viewState.pushShaList,
+            uiModel = viewState.pushUiModel,
+            onClickItem = {
+                viewModel.dispatch(RepoActionDynamicAction.ClickItem(it))
+            }
+        )
     }
 
     EventRefreshContent(
@@ -53,7 +74,9 @@ fun RepoActionDynamicContent(
         onLoadError = {
             viewModel.dispatch(RepoActionDynamicAction.ShowMsg(it))
         },
-        onClickItem = {  },
+        onClickItem = {
+            viewModel.dispatch(RepoActionDynamicAction.ClickItem(it))
+        },
         headerItem = headerItem
     )
 }

@@ -90,6 +90,7 @@ fun ReposActionContent(
             RepoActionDynamicContent(
                 userName = userName,
                 reposName = reposName,
+                repoPermission = viewState.reposUIModel.permission,
                 headerItem = {
                     item {
                         ReposActionHeader(
