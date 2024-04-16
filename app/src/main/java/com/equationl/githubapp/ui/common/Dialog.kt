@@ -2,7 +2,8 @@ package com.equationl.githubapp.ui.common
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.MaterialTheme
@@ -10,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.equationl.githubapp.model.ui.EventUIAction
@@ -33,7 +35,10 @@ fun EventChoosePushDialog(
 ) {
     Dialog(onDismissRequest = { /*TODO*/ }) {
         Column(
-            modifier = Modifier.size(300.dp, 300.dp).background(MaterialTheme.colorScheme.background)
+            modifier = Modifier
+                .heightIn(100.dp, Dp.Infinity)
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.background)
         ) {
             LazyColumn {
                 itemsIndexed(desList) {index, value ->
